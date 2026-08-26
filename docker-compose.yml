@@ -1,0 +1,108 @@
+# ==============================================================
+# Proyecto Diseño de Software — versión 4:
+# api_facturas (C#/ASP.NET Core) + DOS motores con la misma BD
+#
+#                                 ┌→ PostgreSQL (bdfacturas, :15455)
+#   Navegador → API (C#, :8055) ─┤      el interruptor MOTOR_BD
+#                                 └→ SQL Server (bdfacturas, :11455)
+#
+# Uso: docker compose up -d --build     (UN solo comando)
+#   La API habla con PostgreSQL por defecto; para cambiar de motor
+#   SIN tocar código:  $env:MOTOR_BD="sqlserver"
+#                      docker compose up -d api-facturas
+# Reset de las BD: docker compose down -v && docker compose up -d
+#
+# Este archivo CRECE por versiones: v5 sumará MariaDB,
+# v6 la API genérica, v7 el front Flask (Jinja2).
+# ==============================================================
+services:
+
+  # --- PostgreSQL 16 (liviano: la imagen pesa ~50 MB) ---
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: "Diseno123!"    # clave del superusuario 'postgres'
+      POSTGRES_DB: bdfacturas_postgres_local   # la BD que crea al nacer
+    volumes:
+      - pgdata:/var/lib/postgresql/data        # los datos sobreviven a `down`
+      # PostgreSQL SÍ ejecuta automáticamente los scripts montados aquí
+      # la PRIMERA vez (con el volumen vacío) — por eso este proyecto no
+      # necesita contenedor inicializador:
+      - ./db/bdfacturas_postgres.sql:/docker-entrypoint-initdb.d/bdfacturas_postgres.sql:ro
+    ports:
+      - "15455:5432"     # puerto en su PC (para SQLTools/pgAdmin opcional)
+    healthcheck:
+      # ¿La BD ya RESPONDE consultas? (no solo "el contenedor existe")
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bdfacturas_postgres_local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # --- SQL Server 2022 — el SEGUNDO motor (v4). Requiere ~2 GB de RAM ---
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"                       # aceptar la licencia (obligatorio)
+      MSSQL_SA_PASSWORD: "Diseno123!"  # clave del superusuario 'sa'
+      MSSQL_PID: Developer                   # edición gratuita para desarrollo
+    volumes:
+      - mssqldata:/var/opt/mssql
+    ports:
+      - "11455:1433"     # puerto en su PC (para SQLTools/pgAdmin de SQL opcional)
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' -b"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 30s   # margen de gracia: SQL Server tarda en arrancar
+
+  # --- Inicializador de SQL Server (v4): la lección prometida en v1 ---
+  # PostgreSQL se siembra solo; SQL Server NO ejecuta scripts montados —
+  # este contenedor se conecta, corre el script UNA vez y muere.
+  sqlserver-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: "Diseno123!"
+    volumes:
+      - ./db:/scripts:ro
+    entrypoint: ["/bin/bash", "/scripts/init_sqlserver.sh"]
+    restart: "no"
+
+  # --- API Facturas — C# / ASP.NET Core (v4: bi-motor) ---
+  api-facturas:
+    build: ./api_facturas
+    volumes:
+      - ./api_facturas:/app      # el código montado: guardar un .cs recompila solo
+      - /app/bin                 # bin y obj quedan DENTRO del contenedor (Linux),
+      - /app/obj                 #   sin mezclarse con los compilados de Windows
+    restart: unless-stopped
+    ports:
+      - "8055:8055"              # http://localhost:8055
+    environment:
+      # La cadena usa el NOMBRE del servicio como host (postgres:5432),
+      # no localhost: dentro de la red interna de compose los servicios
+      # se resuelven por nombre. Esta variable SOBREESCRIBE el valor de
+      # appsettings.json (ASP.NET lee "ConnectionStrings__X" así).
+      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=bdfacturas_postgres_local;Username=postgres;Password=Diseno123!"
+      # v4 — la cadena del SEGUNDO motor (host interno sqlserver,1433):
+      ConnectionStrings__SqlServer: "Server=sqlserver,1433;Database=bdfacturas_sqlserver_local;User Id=sa;Password=Diseno123!;TrustServerCertificate=True;"
+      # v4 — EL INTERRUPTOR: a qué motor le habla la API. Lee la
+      # variable MOTOR_BD de su terminal; si no existe, postgres.
+      # Cambiar de motor = recrear SOLO este contenedor (segundos):
+      #   $env:MOTOR_BD="sqlserver"; docker compose up -d api-facturas
+      Motor: ${MOTOR_BD:-postgres}
+    depends_on:
+      postgres:
+        condition: service_healthy
+        # ↑ la API arranca cuando la BD ya RESPONDE (y como el script se
+        #   auto-ejecutó al nacer, ya existe con sus 12 tablas y datos).
+      sqlserver-init:
+        condition: service_completed_successfully
+        # ↑ v4: …y cuando el inicializador de SQL Server TERMINÓ BIEN.
+
+volumes:
+  pgdata:      # declaración del volumen nombrado (la "memoria" de la BD)
+  mssqldata:   # v4: la "memoria" del segundo motor
