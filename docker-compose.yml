@@ -19,6 +19,7 @@ services:
 
   # --- PostgreSQL 16 (liviano: la imagen pesa ~50 MB) ---
   postgres:
+    restart: unless-stopped   # si el PC se reinicia, este servicio revive con Docker
     image: postgres:16-alpine
     environment:
       POSTGRES_PASSWORD: "Diseno123!"    # clave del superusuario 'postgres'
@@ -40,6 +41,7 @@ services:
 
   # --- SQL Server 2022 — el SEGUNDO motor (v4). Requiere ~2 GB de RAM ---
   sqlserver:
+    restart: unless-stopped   # si el PC se reinicia, este servicio revive con Docker
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       ACCEPT_EULA: "Y"                       # aceptar la licencia (obligatorio)
