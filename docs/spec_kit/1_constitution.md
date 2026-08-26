@@ -106,7 +106,7 @@ PATCH (parcial → 200 con el mismo body).
 
 | Cosa | Convención |
 |---|---|
-| Puertos del proyecto | API facturas **8055** · PostgreSQL **15455** (reservados: front 8030, API genérica 8031, PostgreSQL 15462, MariaDB 13336) |
+| Puertos del proyecto | API facturas **8055** · PostgreSQL **15455** (reservados: front 8030, PostgreSQL 15462, MariaDB 13336) |
 | Rutas | `/` (diagnóstico) · `/swagger` (documentación interactiva) · `/api/producto` (v1) |
 | Nombres | PascalCase en español; interfaces con prefijo `I`; carpetas `Controllers/ Modelos/ Peticiones/ Servicios/ Repositorios/ Excepciones/ pruebas/` (`Modelos/` = clases entidad; `Peticiones/` = el body de cada verbo) |
 | Sobre de respuesta | Lecturas: `{tabla, limite, total, datos}` · Errores: `{estado, mensaje, detalle}` (+ `errores:[…]` en el 422) |

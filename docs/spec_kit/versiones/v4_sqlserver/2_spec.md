@@ -73,8 +73,7 @@ capas crece con la fábrica.
 **No incluye (deliberado — [mapa](../0_mapa_versiones.md)):**
 - **MariaDB** (v5): el tercer motor esperará — con la fábrica puesta,
   costará una clase.
-- **Selección de motor por petición** o endpoints multi-motor (v6, la API
-  genérica). En v4 el motor se elige UNA vez, al arrancar.
+- **Selección de motor por petición**: descartada del curso. En v4 el motor se elige UNA vez, al arrancar.
 - Cambios de contrato: ningún endpoint nuevo, ningún campo nuevo (salvo
   `motor` en el diagnóstico).
 
