@@ -11,6 +11,22 @@
 
 ---
 
+**El orden de fases con sus compuertas:**
+
+```mermaid
+flowchart TD
+    F0["Fase 0: partir de la v2 cerrada"] -->|"tag v2 + smokes v1 y v2 pasan"| F1
+    F1["Fase 1: moldes simples<br/>empresa y rol"] -->|"ciclo de 5 verbos de ambos"| F2
+    F2["Fase 2: moldes con FK y opcionales<br/>cliente, vendedor y ruta"] -->|"nulos, FK 500 y UNIQUE 500"| F3
+    F3["Fase 3: usuario<br/>BCrypt en el repositorio"] -->|"hash en BD + verificar 200/401/404"| F4
+    F4["Fase 4: los puentes<br/>rol_usuario y rutarol"] -->|"pareja exacta en el DELETE"| F5
+    F5["Fase 5: CIERRE"] -->|"regresión v1+v2 + smoke v3 + cadena comercial"| TAG["commit + tag v3"]
+```
+
+**Guía de lectura:** los moldes van de menor a mayor dificultad (fases
+1–2) para que el calco sea mecánico antes de entrar a lo genuinamente
+nuevo: el secreto (fase 3) y la PK compuesta (fase 4).
+
 ## Fase 0 — Punto de partida verificado
 - [ ] `git tag` muestra `v2` y los smoke tests de v1 y v2 pasan.
 - [ ] `docker compose up -d` (la BD ya tiene TODO desde la v1).

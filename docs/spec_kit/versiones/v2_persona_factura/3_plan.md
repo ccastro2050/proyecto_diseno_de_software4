@@ -164,6 +164,69 @@ clases de `Peticiones/`, igual que en el molde de la v1.
 de siempre + una fila nueva en la tabla de traducción:
 `ConflictoExcepcion → 409`.
 
+### 3.6 Los planos de la rebanada factura (Mermaid)
+
+**Diagrama de clases** — persona calca el molde de la v1 (su diagrama es
+el de [3_plan de v1](../v1_producto_postgres/3_plan.md) §3.1 cambiando la
+entidad); lo que merece plano propio es factura, porque su repositorio no
+habla SQL de tablas sino SPs:
+
+```mermaid
+classDiagram
+    class FacturaController {
+        +Listar()
+        +Consultar(numero)
+        +Crear(FacturaCrear)
+        +Anular(numero)
+    }
+    class IServicioFactura { <<interface>> }
+    class ServicioFactura {
+        -IRepositorioFactura repositorio
+        +valida numero mayor que 0
+        +NO calcula nada (RNF2)
+    }
+    class IRepositorioFactura { <<interface>> }
+    class RepositorioFacturaPostgres {
+        -string cadenaConexion
+        +CALL sp_... INOUT p_resultado
+        +traduce P0001 por patrón
+    }
+    class ConflictoExcepcion { +mensaje (el 409) }
+    FacturaController --> IServicioFactura : recibe por constructor
+    ServicioFactura ..|> IServicioFactura : implementa
+    ServicioFactura --> IRepositorioFactura : recibe por constructor
+    RepositorioFacturaPostgres ..|> IRepositorioFactura : implementa
+    RepositorioFacturaPostgres ..> ConflictoExcepcion : lanza si "ya anulada"
+```
+
+**Secuencia del camino feliz** — `POST /api/factura` de punta a punta;
+observe QUIÉN calcula (nadie en C#):
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Cli as Cliente HTTP
+    participant C as FacturaController
+    participant S as ServicioFactura
+    participant R as RepositorioFacturaPostgres
+    participant BD as PostgreSQL (SP + triggers)
+    Cli->>C: POST /api/factura {fkidcliente, fkidvendedor, productos[]}
+    Note over C: FacturaCrear valida:<br/>lista con MinLength(1), cantidad Range(1..)<br/>si falla → 422 y AQUÍ termina
+    C->>S: Crear(petición válida)
+    S->>R: CrearAsync(cliente, vendedor, productosJson)
+    R->>BD: CALL sp_insertar_factura_y_productosporfactura(..., INOUT p_resultado)
+    Note over BD: transacción del SP: inserta maestro y renglones<br/>los TRIGGERS validan stock, calculan subtotal,<br/>descuentan stock y fijan el total
+    BD-->>R: p_resultado = JSON de la factura completa
+    R-->>S: Factura (deserializada, snake_case → JsonPropertyName)
+    S-->>C: Factura
+    C-->>Cli: 200 con subtotales y total QUE NADIE calculó en C#
+```
+
+**Guía de lectura:** la nota del controller marca la frontera de entrada
+(el 422 corta ANTES de tocar servicio); la nota de la BD marca dónde vive
+la lógica pesada. Si en su código un subtotal se calcula en C#, el
+diagrama lo delata: no hay flecha para eso.
+
 ## 4. Program.cs: el ensamblador crece (y nada más)
 
 ```csharp

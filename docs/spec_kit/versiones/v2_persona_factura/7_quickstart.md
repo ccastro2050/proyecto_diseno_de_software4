@@ -79,6 +79,25 @@ nuevos aparecen bajo Persona y Factura).
 > borrada) — es el comportamiento de negocio correcto. Si quiere el estado
 > semilla exacto: `docker compose down -v && docker compose up -d`.
 
+## 3b. El ciclo de validación, dibujado
+
+```mermaid
+flowchart TD
+    UP["docker compose up -d --build"] --> REG["REGRESIÓN: smoke test<br/>COMPLETO de la v1<br/>(solo cambia version:v2)"]
+    REG -->|falla| ROTO["la v2 rompió la v1:<br/>corregir ANTES de seguir"] --> UP
+    REG -->|pasa| P["bloque 2: persona<br/>(el molde replicado)"]
+    P --> F["bloque 3: facturas<br/>(lecturas maestro-detalle)"]
+    F --> T["bloque 4: crear factura<br/>(el trigger descuenta stock)"]
+    T --> E["bloque 5: errores<br/>422 · 500 stock · 409 · 404"]
+    E --> K["bloque 6: prueba de capas<br/>(sin PostgreSQL)"]
+    K -->|todo verde| TAG["commit + tag v2:<br/>versión CERRADA"]
+    K -->|algo rojo| FIX["corregir y repetir<br/>DESDE la regresión"] --> UP
+```
+
+**Guía de lectura:** la regresión va PRIMERO — si la v1 se rompió, nada
+de lo nuevo cuenta. Y el camino rojo siempre regresa al inicio: después
+de corregir se repite todo, no solo el bloque que falló.
+
 ## 4. Si algo falla
 
 | Síntoma | Causa probable |

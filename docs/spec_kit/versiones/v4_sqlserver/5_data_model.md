@@ -43,6 +43,28 @@ estructura y nombre. Los modelos C# no notan la diferencia.
   la v4 no los llama, pero mantienen la paridad entre los dos dialectos
   — y son el terreno que pisará la API genérica (v6).
 
+## 2b. Un modelo, dos scripts (Mermaid)
+
+El **diagrama entidad-relación NO cambia**: es el de la
+[v1](../v1_producto_postgres/5_data_model.md) (las 12 tablas) — esa es la
+gracia de la v4. Lo que se duplica es el CAMINO del DDL a cada motor:
+
+```mermaid
+flowchart TD
+    ER["EL MODELO (uno solo)<br/>12 tablas · trigger de totales/stock<br/>SPs de factura · mismas semillas"]
+    ER --> DDL1["db/bdfacturas_postgres.sql<br/>dialecto PostgreSQL"]
+    ER --> DDL2["db/bdfacturas_sqlserver.sql<br/>dialecto T-SQL — NUEVO"]
+    DDL1 -->|"docker-entrypoint-initdb.d:<br/>el motor lo ejecuta SOLO"| PG[("PostgreSQL<br/>bdfacturas")]
+    DDL2 -->|"sqlserver-init lo ejecuta<br/>UNA vez y muere Exited(0)"| SS[("SQL Server<br/>bdfacturas_sqlserver_local")]
+    PG === IGUALES["mismos ids · mismos stocks · mismos hashes<br/>(RNF3: paridad de semillas)"]
+    SS === IGUALES
+```
+
+**Guía de lectura:** un solo modelo lógico, dos dialectos físicos, dos
+mecanismos de siembra. La línea gruesa de abajo es el requisito que
+gobierna la versión: si las semillas difirieran, el smoke test único
+sería mentira.
+
 ## 3. Los mensajes que la API traduce (paridad de negocio)
 
 | Situación | PostgreSQL (v2/v3) | SQL Server (v4) | API |

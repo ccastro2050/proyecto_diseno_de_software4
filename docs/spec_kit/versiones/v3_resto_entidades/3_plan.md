@@ -117,6 +117,65 @@ public interface IRepositorioRolUsuario
   consistente con el resto).
 - Prefijos: `/api/rol-usuario` (kebab-case: dos palabras) y `/api/rutarol`.
 
+## 4b. Los planos de los patrones nuevos (Mermaid)
+
+**Diagrama de clases** — usuario y un puente, los dos contratos que NO
+son el molde (los 5 moldes usan el diagrama de la
+[v1](../v1_producto_postgres/3_plan.md) §3.1 cambiando entidad y campos):
+
+```mermaid
+classDiagram
+    class IRepositorioUsuario {
+        <<interface>>
+        +ObtenerTodosAsync(limite) solo email
+        +CrearAsync(email, contrasena)
+        +VerificarContrasenaAsync(email, contrasena) bool?
+    }
+    class RepositorioUsuarioPostgres {
+        -string cadenaConexion
+        +BCrypt.HashPassword(costo 12) AQUÍ y solo aquí
+        +SELECT jamás proyecta contrasena
+    }
+    class Usuario { +string Email  (SIN contraseña: RNF3) }
+    class IRepositorioRolUsuario {
+        <<interface>>
+        +ObtenerPorUsuarioAsync(fkemail)
+        +ObtenerPorRolAsync(fkidrol)
+        +CrearAsync(asignacion)
+        +EliminarAsync(fkemail, fkidrol) AMBAS columnas
+    }
+    class RepositorioRolUsuarioPostgres { +sin ActualizarAsync: se quita y se pone }
+    RepositorioUsuarioPostgres ..|> IRepositorioUsuario : implementa
+    RepositorioUsuarioPostgres ..> Usuario : arma desde filas
+    RepositorioRolUsuarioPostgres ..|> IRepositorioRolUsuario : implementa
+```
+
+**Secuencia de `verificar-contrasena`** — el cimiento del login (v6),
+con el secreto quieto en la BD:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Cli as Cliente HTTP
+    participant C as UsuarioController
+    participant S as ServicioUsuario
+    participant R as RepositorioUsuarioPostgres
+    participant BD as PostgreSQL
+    Cli->>C: POST /api/usuario/verificar-contrasena?valor_usuario=...&valor_contrasena=...
+    C->>S: VerificarContrasenaAsync(email, clave)
+    S->>R: VerificarContrasenaAsync(email, clave)
+    R->>BD: SELECT contrasena WHERE email = @email
+    BD-->>R: el hash $2a$... (o ninguna fila)
+    Note over R: BCrypt.Verify(clave, hash) — el hash<br/>NUNCA pasa de esta capa hacia arriba
+    R-->>S: true / false / null (sin fila)
+    S-->>C: el trío
+    C-->>Cli: 200 válida · 401 incorrecta · 404 no existe
+```
+
+**Guía de lectura:** el hash muere en el repositorio — hacia arriba solo
+viaja un booleano (o null). Si su código devuelve el hash al servicio "para
+compararlo allá", el diagrama lo declara mal diseñado.
+
 ## 5. Program.cs: la última vez que el ensamblador crece "a mano"
 
 16 `AddScoped` nuevos (8 repos + 8 servicios), mismo patrón de siempre, y

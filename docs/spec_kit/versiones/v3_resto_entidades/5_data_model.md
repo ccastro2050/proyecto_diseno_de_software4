@@ -48,6 +48,62 @@ Notas que la API debe respetar:
 - El CASCADE de rutarol significa: borrar una ruta o un rol arrastra sus
   permisos — la BD limpia sola.
 
+## 3b. Las 8 tablas nuevas, en entidad-relación (Mermaid)
+
+```mermaid
+erDiagram
+    empresa {
+        nvarchar10 codigo PK
+        nvarchar100 nombre
+    }
+    cliente {
+        int id PK "SERIAL"
+        decimal credito "DEFAULT 0"
+        nvarchar10 fkcodpersona FK "NOT NULL"
+        nvarchar10 fkcodempresa FK "NULL: persona natural"
+    }
+    vendedor {
+        int id PK "SERIAL"
+        int carnet
+        nvarchar100 direccion
+        nvarchar10 fkcodpersona FK
+    }
+    usuario {
+        nvarchar100 email PK
+        nvarchar200 contrasena "hash BCrypt: JAMAS sale por la API"
+    }
+    rol {
+        int id PK "SERIAL"
+        nvarchar50 nombre
+    }
+    ruta {
+        int id PK "SERIAL"
+        nvarchar100 ruta "UNIQUE"
+        nvarchar200 descripcion
+    }
+    rol_usuario {
+        nvarchar100 fkemail PK, FK
+        int fkidrol PK, FK
+    }
+    rutarol {
+        int fkidruta PK, FK "ON DELETE CASCADE"
+        int fkidrol PK, FK "ON DELETE CASCADE"
+    }
+    persona ||--o{ cliente : "fkcodpersona"
+    persona ||--o{ vendedor : "fkcodpersona"
+    empresa |o--o{ cliente : "fkcodempresa (opcional)"
+    usuario ||--o{ rol_usuario : ""
+    rol ||--o{ rol_usuario : ""
+    ruta ||--o{ rutarol : ""
+    rol ||--o{ rutarol : ""
+```
+
+**Guía de lectura:** `persona` (v2) es el ancla de la cadena comercial —
+cliente y vendedor la exigen. El rombo RBAC (usuario–rol–ruta con sus dos
+puentes) queda LLENO de datos en v3, pero aún no protege nada: eso llega
+con JWT en su versión. La cardinalidad `|o--o{` de empresa dice "un
+cliente puede no tener empresa" — es el mismo null del `fkcodempresa`.
+
 ## 4. El estado final de la cobertura (las 12 tablas)
 
 | Tabla | API desde | Cómo |

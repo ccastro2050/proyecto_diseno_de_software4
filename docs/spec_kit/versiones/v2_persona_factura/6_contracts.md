@@ -113,6 +113,56 @@ POST /api/factura/999/anular
 existe — el conflicto es con el ESTADO actual del recurso. Esa es la
 semántica exacta de `409 Conflict`.
 
+### B5. Las dos secuencias de ERROR nuevas, dibujadas
+
+**El 409** — quién decide "ya está anulada" y quién le pone el número HTTP:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Cli as Cliente HTTP
+    participant C as FacturaController
+    participant S as ServicioFactura
+    participant R as RepositorioFacturaPostgres
+    participant BD as PostgreSQL (sp_anular_factura)
+    Cli->>C: POST /api/factura/7/anular (segunda vez)
+    C->>S: Anular(7)
+    S->>R: AnularAsync(7)
+    R->>BD: CALL sp_anular_factura(7, INOUT)
+    BD--xR: RAISE EXCEPTION P0001 "Factura 7 ya está anulada"
+    Note over R: traduce por SQLSTATE + patrón:<br/>P0001 y "anulada" → ConflictoExcepcion
+    R--xS: ConflictoExcepcion (sube tal cual)
+    S--xC: ConflictoExcepcion
+    Note over C: el try/catch la vuelve HTTP:<br/>ConflictoExcepcion → 409
+    C-->>Cli: 409 {estado, mensaje, detalle}
+```
+
+**El 500 del trigger** — el error de negocio que NO se traduce (es la
+última defensa, no un contrato fino):
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Cli as Cliente HTTP
+    participant C as FacturaController
+    participant R as Repositorio (via servicio)
+    participant BD as PostgreSQL (SP + trigger)
+    Cli->>C: POST /api/factura {cantidad: 9999}
+    Note over C: la petición es VÁLIDA en forma<br/>(9999 pasa Range(1..)) — sigue de largo
+    C->>R: crear la factura
+    R->>BD: CALL sp_insertar... (el trigger valida stock)
+    BD--xR: RAISE "Stock insuficiente para producto PR001..."
+    Note over R: no es P0001+patrón conocido:<br/>NO se traduce, sube como excepción del motor
+    R--xC: PostgresException
+    C-->>Cli: 500 {estado, mensaje, detalle: el mensaje del trigger}
+```
+
+**Guía de lectura:** ambos errores NACEN en la BD; la diferencia es el
+tratamiento. El del SP es un contrato de negocio conocido (por eso se
+traduce a 409/404); el del trigger es la defensa profunda (por eso viaja
+como 500 con el mensaje completo en `detalle`). Cada capa aporta lo suyo:
+la BD decide, el repositorio traduce, el controller pone el número HTTP.
+
 ## C. Diagnóstico (cambia UNA clave)
 
 ```

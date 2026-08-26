@@ -45,6 +45,34 @@ Dos lecciones nuevas, una por rebanada:
                     v1 (intacta)  └── las DOS rebanadas nuevas de la v2
 ```
 
+**El contexto de la v2, dibujado** (Mermaid: GitHub lo renderiza y la IA
+lo lee como parte de la spec):
+
+```mermaid
+flowchart LR
+    CLI["Cliente HTTP<br/>Swagger · curl · front futuro"]
+    subgraph API["api_facturas :8055 — v2"]
+        PROD["rebanada producto<br/>(v1 — INTACTA)"]
+        PERS["rebanada persona<br/>NUEVA: el molde calcado"]
+        FACT["rebanada factura<br/>NUEVA: traductora de SPs"]
+    end
+    subgraph BD["PostgreSQL bdfacturas :15455"]
+        TAB[("tablas<br/>producto · persona<br/>cliente · vendedor")]
+        SP["SPs de facturación<br/>listar · consultar<br/>insertar · anular"]
+        TRG["triggers<br/>subtotal · total · stock<br/>(LA calculadora)"]
+    end
+    CLI -->|"JSON + códigos HTTP"| API
+    PROD -->|"SQL parametrizado"| TAB
+    PERS -->|"SQL parametrizado"| TAB
+    FACT -->|"CALL con INOUT p_resultado (JSON)"| SP
+    SP --- TRG
+```
+
+**Guía de lectura:** a la izquierda viajan contratos HTTP; a la derecha,
+contratos de datos. Fíjese en que la rebanada factura NO toca tablas:
+habla únicamente con los SPs, y quien calcula subtotales, total y stock
+son los triggers — ese es el RNF2 hecho dibujo: la API jamás multiplica.
+
 ## 2. Alcance
 
 **Incluye:**

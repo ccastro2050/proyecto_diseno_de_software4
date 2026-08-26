@@ -5,6 +5,22 @@
 
 ---
 
+**El orden de fases con sus compuertas:**
+
+```mermaid
+flowchart TD
+    F0["Fase 0: partir de la v3 cerrada"] -->|"tag v3 + smoke v3 pasa"| F1
+    F1["Fase 1: el motor nuevo en el compose<br/>(sqlserver + sqlserver-init — la API aún no lo usa)"] -->|"init Exited(0) + un SELECT manual ve las semillas"| F2
+    F2["Fase 2: los 11 repositorios SqlServer<br/>(calco mecánico + factura con OUTPUT)"] -->|"dotnet build compila"| F3
+    F3["Fase 3: la fábrica<br/>(interfaz + 2 implementaciones)"] -->|"prueba de capas: cada fábrica entrega su dialecto"| F4
+    F4["Fase 4: el ensamblador con interruptor<br/>(Program.cs: switch sobre Motor)"] -->|"diagnóstico reporta el motor activo"| F5
+    F5["Fase 5: VERIFICACIÓN TOTAL"] -->|"regresión doble + errores idénticos + frontera del diff"| TAG["commit + tag v4"]
+```
+
+**Guía de lectura:** la fase 1 sube el motor SIN tocar la API — así, si
+algo falla ahí, es Docker, no C#. El código solo empieza a cambiar en la
+fase 2, y siempre por debajo de la frontera de repositorios.
+
 ## Fase 0 — Punto de partida
 
 - [ ] La v3 corre y pasa su smoke test (tag `v3` presente).

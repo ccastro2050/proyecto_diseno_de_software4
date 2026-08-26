@@ -33,6 +33,60 @@ persona ──< vendedor ─┼──< factura ──< productosporfactura >─�
                       └ semilla: clientes 1,2,3,5 · vendedores 1,2,3
 ```
 
+**El mismo grafo en entidad-relación** (Mermaid — PK/FK y cardinalidades;
+sombreado mental: la v2 solo ESCRIBE `factura` y `productosporfactura`):
+
+```mermaid
+erDiagram
+    persona {
+        nvarchar10 codigo PK
+        nvarchar100 nombre
+        nvarchar100 email
+        nvarchar20 telefono
+    }
+    cliente {
+        int id PK
+        nvarchar10 fkcodpersona FK
+    }
+    vendedor {
+        int id PK
+        int carnet
+        nvarchar10 fkcodpersona FK
+    }
+    factura {
+        int numero PK "SERIAL"
+        timestamp fecha "DEFAULT now"
+        numeric total "lo fija el TRIGGER"
+        nvarchar10 estado "activa o anulada"
+        int fkidcliente FK
+        int fkidvendedor FK
+    }
+    productosporfactura {
+        int fknumfactura PK, FK "ON DELETE CASCADE"
+        nvarchar10 fkcodproducto PK, FK
+        int cantidad
+        numeric subtotal "lo fija el TRIGGER"
+    }
+    producto {
+        nvarchar10 codigo PK
+        nvarchar100 nombre
+        int stock "lo mueve el TRIGGER"
+        numeric valorunitario
+    }
+    persona ||--o{ cliente : "es"
+    persona ||--o{ vendedor : "es"
+    cliente ||--o{ factura : "compra"
+    vendedor ||--o{ factura : "vende"
+    factura ||--|{ productosporfactura : "detalle (minimo 1)"
+    producto ||--o{ productosporfactura : "aparece en"
+```
+
+**Guía de lectura:** las tres columnas anotadas con "TRIGGER" son las que
+la API tiene PROHIBIDO enviar — las escribe la BD. La cardinalidad
+`||--|{` de factura a su detalle dice "mínimo 1 renglón": es la misma
+regla del `MinLength(1)` de la petición y del `RAISE` del SP, contada
+tres veces en tres capas.
+
 | Tabla | Lo que la v2 usa |
 |---|---|
 | `cliente` | Solo el **id** como FK del POST de factura (ids semilla: 1, 2, 3 y 5) — sin CRUD |

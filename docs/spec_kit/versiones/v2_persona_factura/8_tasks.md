@@ -12,6 +12,25 @@
 
 ---
 
+**El orden de fases con sus compuertas** (cada flecha solo se cruza si el
+"Verificar:" de la fase pasó):
+
+```mermaid
+flowchart TD
+    F0["Fase 0: partir de la v1 cerrada"] -->|"tag v1 + smoke v1 pasa"| F1
+    F1["Fase 1: persona — modelo y peticiones"] -->|"dotnet build compila"| F2
+    F2["Fase 2: persona — repos, servicio, prueba de capas"] -->|"pruebas OK sin BD"| F3
+    F3["Fase 3: persona — controller y ensamblador"] -->|"ciclo P007 + pareja + FK 500"| F4
+    F4["Fase 4: factura — modelos y petición"] -->|"dotnet build compila"| F5
+    F5["Fase 5: factura — repositorio de SPs"] -->|"build + CALL manual opcional"| F6
+    F6["Fase 6: factura — servicio, controller, ensamblador"] -->|"criterios 3, 4 y 5"| F7
+    F7["Fase 7: CIERRE"] -->|"regresión v1 + smoke v2 completos"| TAG["commit + tag v2"]
+```
+
+**Guía de lectura:** las dos rebanadas van en serie, la fácil primero
+(persona, fases 1–3) — así los errores de arquitectura aparecen en
+terreno conocido antes de entrar a la rebanada nueva (factura, 4–6).
+
 ## Fase 0 — Punto de partida verificado
 - [ ] Estar parado sobre la v1 cerrada: `git tag` muestra `v1` y el smoke
       test de la v1 pasa ([7_quickstart de v1](../v1_producto_postgres/7_quickstart.md) §2).

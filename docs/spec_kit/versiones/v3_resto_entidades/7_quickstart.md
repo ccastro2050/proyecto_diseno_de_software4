@@ -78,6 +78,25 @@ docker compose exec api-facturas dotnet run --project pruebas
 
 También todo con clics en **http://localhost:8055/swagger** (13 tags).
 
+## 3b. El ciclo de validación, dibujado
+
+```mermaid
+flowchart TD
+    UP["docker compose up -d --build"] --> REG["REGRESIÓN: smoke tests<br/>COMPLETOS de v1 Y v2<br/>(solo cambia version:v3)"]
+    REG -->|falla| ROTO["la v3 rompió lo anterior:<br/>corregir ANTES de seguir"] --> UP
+    REG -->|pasa| M["moldes: empresa, cliente,<br/>vendedor, rol, ruta"]
+    M --> CAD["la cadena comercial completa:<br/>empresa→persona→cliente→vendedor<br/>→factura nueva→anular"]
+    CAD --> U["usuario: hash BCrypt,<br/>verificar-contrasena 200/401/404"]
+    U --> PU["puentes: asignar, listar,<br/>DELETE de UNA pareja"]
+    PU --> K["prueba de capas<br/>(sin PostgreSQL)"]
+    K -->|todo verde| TAG["commit + tag v3:<br/>las 12 tablas cubiertas"]
+    K -->|algo rojo| FIX["corregir y repetir<br/>DESDE la regresión"] --> UP
+```
+
+**Guía de lectura:** el bloque de la cadena comercial es el corazón de la
+validación — demuestra que v2 y v3 trabajan JUNTAS (una factura con
+cliente y vendedor recién creados), no como módulos aislados.
+
 ## 4. Si algo falla
 
 | Síntoma | Causa probable |

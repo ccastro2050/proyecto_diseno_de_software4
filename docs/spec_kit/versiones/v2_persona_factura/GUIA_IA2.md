@@ -55,7 +55,7 @@ Todos los comandos van en la terminal integrada de VS Code (PowerShell),
    esta guía) — ajuste la primera ruta a donde tenga el clon:
 
    ```powershell
-   Copy-Item ..\proyecto_diseno_de_software2\docs\spec_kit\versiones\v2_persona_factura\* docs\spec_kit\versiones\v2_persona_factura\
+   Copy-Item ..\proyecto_diseno_de_software4\docs\spec_kit\versiones\v2_persona_factura\* docs\spec_kit\versiones\v2_persona_factura\
    ```
 
    (También sirve el explorador de Windows: Ctrl+C, Ctrl+V de la carpeta

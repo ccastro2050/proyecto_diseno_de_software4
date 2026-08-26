@@ -79,6 +79,26 @@ docker compose exec api-facturas dotnet run --project pruebas
 # → … CRITERIO 5 OK: cada fábrica entrega los repositorios de su motor, sin abrir conexiones
 ```
 
+## 5b. El ciclo de validación, dibujado (la regresión DOBLE)
+
+```mermaid
+flowchart TD
+    UP["docker compose up -d --build<br/>(4 servicios: espere el init Exited 0)"] --> R1["REGRESIÓN TOTAL contra PostgreSQL:<br/>smokes de v1 + v2 + v3 completos<br/>(motor: postgres — el default)"]
+    R1 -->|falla| ROTO["la v4 rompió algo:<br/>corregir ANTES del interruptor"] --> UP
+    R1 -->|pasa| SW["el interruptor:<br/>MOTOR_BD=sqlserver<br/>recrear SOLO la API"]
+    SW --> R2["LA MISMA regresión total,<br/>ahora contra SQL Server<br/>(motor: sqlserver)"]
+    R2 -->|falla| DIAL["bug de dialecto: se corrige en<br/>Repositorios/*SqlServer o en el .sql —<br/>JAMÁS en servicios/controllers"] --> SW
+    R2 -->|pasa| E["errores de negocio idénticos:<br/>404 · 409 · 500 en ambos motores"]
+    E --> D["la frontera del diff:<br/>git diff v3 --stat"]
+    D --> K["prueba de capas:<br/>las fábricas, sin conexiones"]
+    K -->|todo verde| TAG["commit + tag v4:<br/>API bi-motor"]
+```
+
+**Guía de lectura:** es UNA regresión ejecutada DOS veces — no dos
+regresiones. Si el camino rojo del motor nuevo lo lleva a editar un
+servicio o un controller, deténgase: el bug está en el dialecto (abajo),
+no en el diseño (arriba).
+
 ## 6. Si algo falla
 
 | Síntoma | Causa probable |

@@ -35,6 +35,32 @@ interfaces. Bono didáctico: también se paga la promesa de la v1 — SQL
 Server NO se siembra solo, y por fin se conoce el patrón del **contenedor
 inicializador** por contraste con PostgreSQL.
 
+**El contexto de la v4, dibujado** (Mermaid — la prueba definitiva de
+las capas):
+
+```mermaid
+flowchart LR
+    CLI["Cliente HTTP"]
+    subgraph API["api_facturas :8055 — v4"]
+        CAPAS["Controllers · Servicios ·<br/>Peticiones · Modelos · Excepciones<br/>═══ INTOCABLES (RNF2) ═══"]
+        FAB{"IFabricaRepositorios<br/>elegida UNA vez al arrancar<br/>por la clave Motor"}
+        RP["11 repositorios<br/>*Postgres"]
+        RS["11 repositorios<br/>*SqlServer — NUEVOS"]
+    end
+    PG[("PostgreSQL :15455<br/>bdfacturas — se siembra sola")]
+    SS[("SQL Server :11455<br/>la MISMA bdfacturas<br/>sembrada por sqlserver-init")]
+    INT["MOTOR_BD<br/>postgres (default) | sqlserver"] -.->|"configuración,<br/>no código"| FAB
+    CLI -->|"51 endpoints: LOS MISMOS"| CAPAS
+    CAPAS --> FAB
+    FAB -->|"Motor=postgres"| RP --> PG
+    FAB -->|"Motor=sqlserver"| RS --> SS
+```
+
+**Guía de lectura:** la caja de arriba no tiene ni una flecha nueva — ese
+es el requisito RNF2 dibujado: el segundo motor entra por DEBAJO de las
+interfaces. El rombo es la única decisión, y la toma una variable de
+entorno, no el código.
+
 ## 2. Alcance
 
 **Incluye:** servicios `sqlserver` + `sqlserver-init` en el compose

@@ -32,7 +32,7 @@ los kits de v1/v2 (el código que la IA necesite ver, se lo pega usted).
 2. **Copie las specs** desde el clon del curso (ajuste la primera ruta):
 
    ```powershell
-   Copy-Item ..\proyecto_diseno_de_software3\docs\spec_kit\versiones\v3_resto_entidades\* docs\spec_kit\versiones\v3_resto_entidades\
+   Copy-Item ..\proyecto_diseno_de_software4\docs\spec_kit\versiones\v3_resto_entidades\* docs\spec_kit\versiones\v3_resto_entidades\
    ```
 
 3. **Cree los ARCHIVOS VACÍOS nuevos** — los 68 que la IA irá llenando

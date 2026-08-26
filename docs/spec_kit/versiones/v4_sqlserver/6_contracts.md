@@ -43,6 +43,38 @@ nuevo de toda la versión.
 Los códigos son los mismos: 200 · 204 lista vacía · 400 parámetros · 404
 no existe · 409 conflicto de negocio · 422 la petición · 500 el motor.
 
+### 2b. La MISMA secuencia de error, en los dos dialectos (Mermaid)
+
+El 409 de la doble anulación, dibujado UNA vez con las dos rutas — la
+mitad de arriba es idéntica sin importar el motor:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Cli as Cliente HTTP
+    participant C as FacturaController (INTOCADO)
+    participant R as IRepositorioFactura
+    participant PG as PostgreSQL
+    participant SS as SQL Server
+    Cli->>C: POST /api/factura/7/anular (segunda vez)
+    C->>R: AnularAsync(7) — la interfaz, no un dialecto
+    alt Motor=postgres (RepositorioFacturaPostgres)
+        R->>PG: CALL sp_anular_factura(7, INOUT)
+        PG--xR: RAISE P0001 "ya está anulada" (sin número: filtra por PATRÓN)
+    else Motor=sqlserver (RepositorioFacturaSqlServer)
+        R->>SS: EXEC sp_anular_factura @p_numero=7 (CommandType.StoredProcedure)
+        SS--xR: THROW 50010 "ya está anulada" (numerado: filtra por NÚMERO+patrón)
+    end
+    Note over R: ambos dialectos traducen a la MISMA<br/>ConflictoExcepcion — aquí muere la diferencia
+    R--xC: ConflictoExcepcion
+    C-->>Cli: 409 {estado, mensaje} idénticos (detalle puede variar en redacción)
+```
+
+**Guía de lectura:** el bloque `alt` es el ÚNICO tramo donde los motores
+se distinguen, y queda encerrado en el repositorio. Del repositorio hacia
+arriba viaja una sola excepción de negocio — por eso el controller no
+supo, no sabe y no sabrá qué motor respondió.
+
 **Matiz honesto del contrato:** el campo `detalle` de los errores 500
 transporta el mensaje del MOTOR, y cada motor redacta distinto
 (PostgreSQL: "inserción o actualización en la tabla «cliente» viola la

@@ -69,6 +69,50 @@ POST /api/usuario/verificar-contrasena?valor_usuario={email}&valor_contrasena={c
 → 404 {estado:404, mensaje:"Usuario no encontrado.", …}
 ```
 
+### B2. Las secuencias de ERROR propias de la v3, dibujadas
+
+**El 401** — la novedad de esta versión (v1/v2 no lo tenían) y su
+diferencia con el 404:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Cli as Cliente HTTP
+    participant C as UsuarioController
+    participant R as Repositorio (via servicio)
+    participant BD as PostgreSQL
+    Cli->>C: POST /api/usuario/verificar-contrasena (clave equivocada)
+    C->>R: verificar(email, clave)
+    R->>BD: SELECT contrasena WHERE email = @email
+    BD-->>R: hash $2a$...
+    Note over R: BCrypt.Verify(clave, hash) = false<br/>(también false si la semilla guardó<br/>texto plano: lección a propósito)
+    R-->>C: false
+    C-->>Cli: 401 Contraseña incorrecta
+    Note over Cli,BD: si el SELECT no trae fila → null → 404:<br/>usuario inexistente y clave mala son<br/>respuestas DISTINTAS a propósito (aún sin JWT)
+```
+
+**El 500 del UNIQUE** — la BD como última defensa, ahora con `uq_ruta`:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Cli as Cliente HTTP
+    participant C as RutaController
+    participant R as Repositorio (via servicio)
+    participant BD as PostgreSQL
+    Cli->>C: POST /api/ruta {"ruta":"/home", ...}  (ya existe)
+    Note over C: la petición es VÁLIDA en forma:<br/>el duplicado no se puede saber sin la BD
+    C->>R: crear la ruta
+    R->>BD: INSERT INTO ruta (...)
+    BD--xR: violación de UNIQUE uq_ruta
+    R--xC: PostgresException (no se traduce: no es contrato fino)
+    C-->>Cli: 500 con el error del motor en detalle
+```
+
+**Guía de lectura:** el 401 lo decide un booleano del repositorio (el
+hash no sube); el 500 lo decide la restricción de la BD. Ninguna de las
+dos reglas vive en el servicio — y eso es diseño, no accidente.
+
 ## C. Las tablas puente (2 × 5 endpoints)
 
 Sin PUT/PATCH. El DELETE exige **la pareja exacta** (ambas columnas).

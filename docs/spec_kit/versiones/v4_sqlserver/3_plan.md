@@ -113,6 +113,93 @@ La cuenta didáctica: agregar MariaDB en la v5 costará **una clase**
 (`FabricaMariaDb`) **y un case** — no 11 registros nuevos. Eso compra la
 fábrica.
 
+## 4b. Los planos de la fábrica (Mermaid)
+
+**Diagrama de clases** — el patrón fábrica abstracta con sus dos
+implementaciones:
+
+```mermaid
+classDiagram
+    class IFabricaRepositorios {
+        <<interface>>
+        +CrearRepositorioProducto() IRepositorioProducto
+        +CrearRepositorioPersona() IRepositorioPersona
+        +CrearRepositorioFactura() IRepositorioFactura
+        +... 11 métodos, uno por rebanada
+    }
+    class FabricaPostgres {
+        -string cadenaPostgres
+        +entrega los 11 *Postgres
+    }
+    class FabricaSqlServer {
+        -string cadenaSqlServer
+        +entrega los 11 *SqlServer
+    }
+    class ProgramCs {
+        +lee Motor UNA vez
+        +switch: postgres | sqlserver | error claro
+        +registra 11 interfaces pidiéndolas a la fábrica
+    }
+    class ServicioProducto { +NO cambió ni una letra }
+    FabricaPostgres ..|> IFabricaRepositorios : implementa
+    FabricaSqlServer ..|> IFabricaRepositorios : implementa
+    ProgramCs --> IFabricaRepositorios : elige y usa
+    ServicioProducto --> IFabricaRepositorios : ni sabe que existe
+```
+
+**Secuencia del interruptor** — qué pasa cuando usted escribe
+`MOTOR_BD=sqlserver`:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Prof as Usted (PowerShell)
+    participant DC as docker compose
+    participant P as Program.cs (arranque)
+    participant F as FabricaSqlServer
+    participant API as Los 51 endpoints
+    Prof->>DC: MOTOR_BD=sqlserver docker compose up -d api-facturas
+    DC->>P: recrea SOLO la API con Motor=sqlserver
+    P->>P: switch sobre Motor → new FabricaSqlServer(cadenaSqlServer)
+    P->>F: CrearRepositorioX() × 11
+    F-->>P: los 11 repositorios dialecto T-SQL
+    Note over P: los AddScoped registran interfaces:<br/>servicios y controllers NO se recompilan,<br/>NO se editan, NO se enteran
+    P-->>API: la API arriba, diagnóstico motor:"sqlserver"
+    Prof->>API: la MISMA regresión total de v1+v2+v3
+    API-->>Prof: pasa idéntica (criterio 2)
+```
+
+**Guía de lectura:** el motor se decide en el paso 3 y en NINGÚN otro
+lugar. Si su diff de la v4 toca un servicio o un controller, violó la
+frontera que este diagrama declara (criterio 4: `git diff v3 --stat`).
+
+**Arquitectura de despliegue de la v4** — el sistema de servidores crece
+a DOS motores (compare con el de la [v1](../v1_producto_postgres/3_plan.md)
+§3.1):
+
+```mermaid
+flowchart LR
+    NAV["Navegador / curl / Swagger"]
+    subgraph PC["Su PC — Docker Desktop"]
+        subgraph RED["red interna del compose (LAN virtual)"]
+            API["SERVIDOR DE APLICACIONES<br/>api-facturas · escucha en 8055"]
+            PG[("SERVIDOR BD 1<br/>hostname: postgres · :5432<br/>alpine ~50 MB — se siembra SOLA")]
+            SS[("SERVIDOR BD 2<br/>hostname: sqlserver · :1433<br/>2022 ~2 GB — NO se siembra sola")]
+            INIT["sqlserver-init<br/>corre el .sql UNA vez y muere<br/>Exited(0) = éxito"]
+        end
+    end
+    NAV -->|"localhost:8055"| API
+    API -->|"postgres:5432"| PG
+    API -->|"sqlserver:1433"| SS
+    INIT -->|"espera el healthcheck,<br/>siembra, termina"| SS
+    NAV -.->|"15455 · 11455<br/>(diagnóstico opcional)"| PG
+```
+
+**Guía de lectura:** los DOS motores viven siempre encendidos; el
+interruptor decide a cuál le habla la API. La caja `sqlserver-init` es la
+lección de orquestación prometida en v1: un servidor que existe solo para
+sembrar a otro y morir con dignidad (`Exited 0`).
+
 ## 5. El compose con dos motores (y la lección del inicializador)
 
 - Servicio `sqlserver` (2022): healthcheck REAL con sqlcmd y

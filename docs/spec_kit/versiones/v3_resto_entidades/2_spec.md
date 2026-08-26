@@ -36,6 +36,31 @@ entidad** que faltaban:
 3. **Las tablas puente** (rol_usuario, rutarol): PK compuesta, sin
    PUT/PATCH, búsquedas por cada lado, y DELETE por AMBAS columnas.
 
+**El contexto de la v3, dibujado** (Mermaid — al cerrar, las 12 tablas
+con API):
+
+```mermaid
+flowchart LR
+    CLI["Cliente HTTP<br/>Swagger · curl"]
+    subgraph API["api_facturas :8055 — v3"]
+        V12["v1+v2 INTACTAS<br/>producto · persona · factura"]
+        MOLDES["5 moldes NUEVOS<br/>empresa · cliente · vendedor<br/>rol · ruta"]
+        USR["usuario NUEVO<br/>BCrypt en el repositorio<br/>el secreto NO sale"]
+        PUENTES["2 puentes NUEVOS<br/>rol_usuario · rutarol<br/>PK compuesta, sin PUT/PATCH"]
+    end
+    BD[("PostgreSQL bdfacturas :15455<br/>las 12 tablas — completa desde v1")]
+    CLI -->|"JSON + códigos HTTP"| API
+    V12 --> BD
+    MOLDES -->|"SQL parametrizado"| BD
+    USR -->|"INSERT con hash $2a$...<br/>SELECT solo email"| BD
+    PUENTES -->|"DELETE por AMBAS columnas"| BD
+```
+
+**Guía de lectura:** la v3 no agrega técnica de capas — agrega los tres
+patrones de entidad que faltaban. Las flechas anotadas son las reglas
+duras: el hash entra pero nunca sale, y el puente borra por la pareja
+exacta.
+
 ## 2. Alcance
 
 **Incluye:** CRUD de empresa, cliente, vendedor, rol y ruta · usuario con
