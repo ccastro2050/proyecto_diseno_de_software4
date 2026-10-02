@@ -149,3 +149,167 @@ def mis_permisos(token: str):
     if r is None or r.status_code != 200:
         return []
     return r.json().get("datos", [])
+
+
+def consulta(nombre: str, token: str = None):
+    """v4 — una de las diez consultas multitabla.
+
+    AQUI SI VALE LO GENERICO, y conviene decir por que, porque la regla del
+    proyecto es la contraria: la API expone una RUTA POR CONSULTA
+    -/api/consultas/ventas-por-producto-, con su nombre y su contrato. Esto no
+    es un /api/{consulta} en la API: es el cliente de este front, que recibe
+    cual pedir. El contrato que consume sigue siendo especifico.
+
+    EL SOBRE ES OTRO: { consulta, total, datos[] } — no el { tabla, limite,
+    total, datos[] } del CRUD. Una consulta no tiene tabla ni limite: tiene
+    nombre. Leer la clave equivocada devolveria una lista vacia SIN error.
+    """
+    # El token llega por argumento porque el tablero pide las diez EN HILOS,
+    # y `session` no existe en un hilo nuevo. Si no llega, _cabecera lo busca
+    # en la sesion como siempre.
+    r = _llamar("GET", f"/api/consultas/{nombre}", headers=_cabecera(token))
+    if r is None:
+        return False, [], ["El servicio no esta disponible."]
+    if r.status_code == 200:
+        return True, r.json().get("datos", []), []
+    return False, [], _mensaje(r)
+
+# ------------------------------------------------------------
+# LA FACTURACION (v2) — maestro-detalle, y no es un CRUD
+# ------------------------------------------------------------
+# Van aparte de las funciones genericas de arriba porque el recurso no se
+# comporta como los demas: no tiene PUT ni PATCH ni DELETE. Se emite y se
+# anula.
+
+
+def listar_facturas():
+    """Las facturas, con su encabezado. Mismo sobre que el resto del CRUD."""
+    r = _llamar("GET", "/api/factura", headers=_cabecera())
+    if r is None:
+        return False, [], ["El servicio no esta disponible."]
+    if r.status_code == 204:
+        return True, [], []
+    if r.status_code == 200:
+        return True, r.json().get("datos", []), []
+    return False, [], _mensaje(r)
+
+
+def obtener_factura(numero):
+    """Una factura CON SUS RENGLONES.
+
+    Y aqui el sobre es OTRO: la API devuelve el objeto de la factura, no un
+    `{tabla, limite, total, datos[]}`. Una factura no es una lista.
+    """
+    r = _llamar("GET", f"/api/factura/{numero}", headers=_cabecera())
+    if r is None:
+        return False, None, ["El servicio no esta disponible."]
+    if r.status_code == 200:
+        return True, r.json(), []
+    return False, None, _mensaje(r)
+
+
+def crear_factura(datos):
+    """Emite la factura con todos sus renglones EN UN SOLO ENVIO.
+
+    POR QUE DE UNA Y NO RENGLON POR RENGLON: una factura con tres renglones no
+    son cuatro peticiones. Si la tercera fallara, quedaria media factura en la
+    base —y «media factura» no es un estado que el negocio reconozca—. La API
+    lo mete todo en un procedimiento almacenado, dentro de UNA transaccion.
+
+    LO QUE NO VIAJA: `subtotal` ni `total`. Los calcula el disparador. Mandarlos
+    seria tener la misma regla en dos lugares, y el dia que difieran nadie
+    sabria cual manda.
+    """
+    cuerpo = {
+        "fkidcliente": int(datos["fkidcliente"]) if datos.get("fkidcliente") else None,
+        "fkidvendedor": int(datos["fkidvendedor"]) if datos.get("fkidvendedor") else None,
+        "productos": [{"codigo": p["codigo"], "cantidad": int(p["cantidad"])}
+                      for p in datos.get("productos", [])],
+    }
+    r = _llamar("POST", "/api/factura", json=cuerpo, headers=_cabecera())
+    if r is None:
+        return False, None, ["El servicio no esta disponible."]
+    if r.status_code in (200, 201):
+        return True, r.json(), []
+    return False, None, _mensaje(r)
+
+
+def anular_factura(numero):
+    """ANULA la factura. No la borra, y la diferencia importa.
+
+    Un DELETE haria desaparecer el documento, y una factura emitida es un hecho
+    que ocurrio: se anula dejando constancia. De ahi que sea un POST a
+    `/anular` y no un DELETE — y de ahi que el tablero de la v4 pueda contar
+    cuanto se ha anulado y por cliente.
+    """
+    r = _llamar("POST", f"/api/factura/{numero}/anular", headers=_cabecera())
+    if r is None:
+        return False, ["El servicio no esta disponible."]
+    if r.status_code in (200, 204):
+        return True, []
+    return False, _mensaje(r)
+
+# ------------------------------------------------------------
+# USUARIO CON SUS ROLES (v2) — el otro maestro-detalle
+# ------------------------------------------------------------
+
+
+def listar_usuarios_con_roles():
+    """Los usuarios con la lista de sus roles, en una sola consulta.
+
+    La API los trae con STRING_AGG; pedir los usuarios y despues un viaje por
+    cada uno para sus roles serian N+1 peticiones y el mismo resultado.
+    """
+    r = _llamar("GET", "/api/usuario-con-roles", headers=_cabecera())
+    if r is None:
+        return False, [], ["El servicio no esta disponible."]
+    if r.status_code == 204:
+        return True, [], []
+    if r.status_code == 200:
+        return True, r.json().get("datos", []), []
+    return False, [], _mensaje(r)
+
+
+def crear_usuario_con_roles(email, contrasena, roles):
+    """Crea el usuario Y le asigna sus roles EN UN SOLO ENVIO.
+
+    `roles` es una lista de enteros. La API exige minimo uno: un usuario sin
+    rol no puede hacer nada, y crearlo asi solo deja basura en la tabla.
+    """
+    cuerpo = {"email": email, "contrasena": contrasena,
+              "roles": [int(x) for x in roles]}
+    r = _llamar("POST", "/api/usuario-con-roles", json=cuerpo, headers=_cabecera())
+    if r is None:
+        return False, ["El servicio no esta disponible."]
+    if r.status_code in (200, 201):
+        return True, []
+    return False, _mensaje(r)
+
+
+def reemplazar_roles(email, roles, contrasena=None):
+    """REEMPLAZA los roles del usuario por los que llegan.
+
+    Es un PUT y no un PATCH a proposito: lo que llega ES el juego completo de
+    roles. Quitar un rol es volver a enviar la lista sin el — no hay un
+    «quitame este». Asi la pantalla de casillas dice la verdad: lo que esta
+    marcado es lo que queda.
+    """
+    cuerpo = {"roles": [int(x) for x in roles]}
+    if contrasena:
+        cuerpo["contrasena"] = contrasena
+    r = _llamar("PUT", f"/api/usuario-con-roles/{email}", json=cuerpo, headers=_cabecera())
+    if r is None:
+        return False, ["El servicio no esta disponible."]
+    if r.status_code in (200, 204):
+        return True, []
+    return False, _mensaje(r)
+
+
+def eliminar_usuario_con_roles(email):
+    """Borra el usuario y sus asignaciones."""
+    r = _llamar("DELETE", f"/api/usuario-con-roles/{email}", headers=_cabecera())
+    if r is None:
+        return False, ["El servicio no esta disponible."]
+    if r.status_code in (200, 204):
+        return True, []
+    return False, _mensaje(r)

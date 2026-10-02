@@ -39,4 +39,7 @@ public interface IFabricaRepositorios
     /// PostgreSQL no se notaria hasta que los dos dejaran de tener los
     /// mismos datos.</summary>
     IRepositorioAcceso CrearRepositorioAcceso();
+
+    /// <summary>Las 10 consultas multitabla (v4). Solo lectura.</summary>
+    IRepositorioConsultas CrearRepositorioConsultas();
 }

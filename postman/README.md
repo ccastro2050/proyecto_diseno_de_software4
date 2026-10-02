@@ -39,7 +39,7 @@ Cada petición trae su explicación en la pestaña de descripción.
 
 La colección usa la variable `base` = `http://localhost:8055` (el proyecto
 del curso). Si está probando **SU reconstrucción** (la de la
-[GUIA_IA](../docs/spec_kit/versiones/v3_resto_entidades/GUIA_IA3.md), que corre en el puerto 8155): clic en la
+[GUIA_IA](../docs/spec_kit/versiones/v3_control_acceso/GUIA_IA3.md), que corre en el puerto 8155): clic en la
 colección → pestaña **Variables** → cambie `base` a
 `http://localhost:8155`. Una sola edición y las 41 peticiones apuntan a su
 proyecto.

@@ -37,4 +37,8 @@ public class FabricaSqlServer : IFabricaRepositorios
 
     // v3 — el control de acceso.
     public IRepositorioAcceso CrearRepositorioAcceso() => new RepositorioAccesoSqlServer(_cadenaConexion);
+
+    // v4 — las consultas multitabla. Cada motor trae su dialecto:
+    // PostgreSQL y SQL Server no cuentan igual ni agregan igual.
+    public IRepositorioConsultas CrearRepositorioConsultas() => new RepositorioConsultasSqlServer(_cadenaConexion);
 }

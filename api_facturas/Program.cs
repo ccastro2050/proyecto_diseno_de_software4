@@ -257,6 +257,17 @@ builder.Services.AddSwaggerGen(opciones =>
 });             // arma el documento OpenAPI
 
 // Construir la aplicación con todo lo registrado:
+// ------------------------------------------------------------
+// LAS CONSULTAS MULTITABLA (v4)
+// ------------------------------------------------------------
+// Un repositorio de SOLO LECTURA, y por eso no tiene servicio con reglas: no
+// hay nada que validar: 10 consultas que cruzan 4 o mas tablas y devuelven
+// filas. El servicio existe igual, para que el controlador siga sin hablarle
+// al repositorio — la capa no se salta porque hoy este vacia.
+builder.Services.AddScoped<IRepositorioConsultas>(
+    _ => fabrica.CrearRepositorioConsultas());
+builder.Services.AddScoped<IServicioConsultas, ServicioConsultas>();
+
 var app = builder.Build();
 
 // Encender Swagger: el JSON (OpenAPI) y la página interactiva:

@@ -96,6 +96,25 @@ services:
       # Cambiar de motor = recrear SOLO este contenedor (segundos):
       #   $env:MOTOR_BD="sqlserver"; docker compose up -d api-facturas
       Motor: ${MOTOR_BD:-postgres}
+      # ------------------------------------------------------------
+      # EL TOKEN (v3)
+      # ------------------------------------------------------------
+      # La clave que FIRMA el token. Program.cs la exige de 32 caracteres o
+      # mas y ABORTA el arranque si falta — y esa validacion es la que hizo
+      # falta aqui: sin esta variable la API compilaba, arrancaba y se moria,
+      # y el puerto simplemente no respondia.
+      #
+      # Que no este en appsettings.json es a proposito: una clave de firma no
+      # se versiona. Esta es de DESARROLLO y lo dice su propio texto; en un
+      # servidor real se inyecta por variable de entorno o por un gestor de
+      # secretos, y nunca se parece a esta.
+      Jwt__Key: "ClaveDeDesarrolloDelCursoDisenoDeSoftware_2026_2_NoEsUnSecreto!"
+      Jwt__Issuer: "ApiFacturas"
+      Jwt__Audience: "FrontFacturas"
+      # 60 minutos. Vencido, el token devuelve 401 — y para que eso ocurra de
+      # verdad, Program.cs pone ClockSkew en cero: ASP.NET perdona 5 minutos
+      # por defecto, asi que sin esa linea un token vencido sigue sirviendo.
+      Jwt__DuracionMinutos: "60"
     depends_on:
       postgres:
         condition: service_healthy
