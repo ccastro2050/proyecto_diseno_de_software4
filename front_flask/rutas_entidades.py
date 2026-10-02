@@ -190,3 +190,25 @@ def retirar_puente(clave, a, b):
     flash("Asignacion retirada." if ok else " ".join(errores),
           "exito" if ok else "error")
     return redirect(url_for("entidades.lista", clave=clave))
+
+# ------------------------------------------------------------
+# UNA DIRECCION POR RECURSO, apuntando a la MISMA vista generica
+# ------------------------------------------------------------
+# `/productos`, `/empresas`, `/personas`… — las mismas que en el front de
+# Blazor de los otros dos cursos, para que la direccion de un recurso sea la
+# misma en los tres.
+#
+# No contradice que las vistas sean genericas: la implementacion sigue siendo
+# UNA, y lo que se registra aqui es por donde se entra. Flask elige la regla
+# cuyos `defaults` coinciden, asi que `url_for("entidades.lista",
+# clave="producto")` sigue funcionando y devuelve `/productos`.
+for _clave, _cfg in ENTIDADES.items():
+    _url = _cfg.get("url", _clave)
+    bp.add_url_rule("/%s" % _url, "lista", lista,
+                    defaults={"clave": _clave}, methods=["GET", "POST"])
+    bp.add_url_rule("/%s/<pk>/guardar" % _url, "guardar", guardar,
+                    defaults={"clave": _clave}, methods=["POST"])
+    bp.add_url_rule("/%s/<pk>/retirar" % _url, "retirar", retirar,
+                    defaults={"clave": _clave}, methods=["POST"])
+    bp.add_url_rule("/%s/<a>/<b>/retirar" % _url, "retirar_puente",
+                    retirar_puente, defaults={"clave": _clave}, methods=["POST"])

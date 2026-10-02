@@ -170,11 +170,11 @@ repetido:** registrar dos veces la misma interfaz no rompe nada —gana el
 
 | Archivo | Qué enseña |
 |---|---|
-| `/e/cliente` | **Dos** desplegables, uno **opcional** con «(ninguna)» → `null` |
-| `/e/vendedor` | Uno obligatorio: el mismo patrón, sin la opción vacía |
+| `/clientes` | **Dos** desplegables, uno **opcional** con «(ninguna)» → `null` |
+| `/vendedores` | Uno obligatorio: el mismo patrón, sin la opción vacía |
 | `/facturas` | **El maestro-detalle.** La pieza central, y la única con rutas propias |
-| `/e/rol_usuario` | La puente cruda: **sin editar**, y el quitar con dos claves |
-| `/e/rutarol` | La otra puente, **con el aviso de que todavía no aplica nada** |
+| `/rol-usuario` | La puente cruda: **sin editar**, y el quitar con dos claves |
+| `/ruta-rol` | La otra puente, **con el aviso de que todavía no aplica nada** |
 
 **Un servicio del front POR RECURSO**, igual que en la v1 — doce líneas en el
 `Program.cs` del front. Un `ApiService` genérico sería más corto y es

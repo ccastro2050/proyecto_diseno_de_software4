@@ -147,21 +147,21 @@ la base de datos, la API y la **interfaz gráfica**.
 |---|---|---|
 | `/tablero` | **Tablero** | v4 |
 | `/facturas` | **Facturas** | v2 |
-| `/e/producto` | Productos | v1 |
-| `/e/empresa` | Empresas | v1 |
-| `/e/persona` | Personas | v1 |
-| `/e/rol` | Roles | v1 |
-| `/e/ruta` | Rutas | v1 |
-| `/e/usuario` | Usuarios | v1 |
-| `/e/cliente` | Clientes | v2 |
-| `/e/vendedor` | Vendedores | v2 |
-| `/e/rol_usuario` | Roles por usuario | v2 |
-| `/e/rutarol` | Permisos por rol | v2 |
+| `/productos` | Productos | v1 |
+| `/empresas` | Empresas | v1 |
+| `/personas` | Personas | v1 |
+| `/roles` | Roles | v1 |
+| `/rutas` | Rutas | v1 |
+| `/usuarios` | Usuarios | v1 |
+| `/clientes` | Clientes | v2 |
+| `/vendedores` | Vendedores | v2 |
+| `/rol-usuario` | Roles por usuario | v2 |
+| `/ruta-rol` | Permisos por rol | v2 |
 
 > **El menú nombra RECURSOS del dominio, no tablas ni rutas de la API.**
 > Dice «Facturas», no `/api/factura`.
 >
-> Y las direcciones son **genéricas** —`/e/producto`, `/e/empresa`—, al
+> Y las direcciones son **genéricas** —`/productos`, `/empresas`—, al
 > contrario que la API, donde cada recurso tiene su ruta propia. No es una
 > contradicción: la API expone un **contrato** que otros leen, y un
 > `/api/{tabla}` lo dejaría en blanco. Esto no expone nada: es la
@@ -185,7 +185,7 @@ manda a `/login` y la API responde **401**.
 > Swagger).
 
 **La prueba que importa:** entre como `vendedor1` y escriba
-**`/e/usuario` en la barra de direcciones**. Tiene que quedar fuera, con
+**`/usuarios` en la barra de direcciones**. Tiene que quedar fuera, con
 **cero filas**. Si mostrara los datos, el control estaba en el menú — y
 esconder una entrada del menú **no es** control de acceso.
 

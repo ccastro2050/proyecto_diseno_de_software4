@@ -95,7 +95,9 @@ contenedor y en el puerto **8067**.
 | El registro de recursos | `entidades.py` |
 | `cliente_api`: el único sitio que sabe de HTTP | `cliente_api.py` |
 | El armazón y el menú | `templates/base.html` |
-| Las vistas del recurso, genéricas | `rutas_entidades.py` · `templates/entidades/` |
+| Las vistas del recurso, genéricas | `rutas_entidades.py` · `templates/entidades/lista.html` |
+| **El formulario va EN LA MISMA página** que la tabla, y «Editar» lo rellena con `?editar=` | — igual que el componente de Blazor de los otros cursos |
+| **Los DOS botones de guardar**: «la ficha completa» (`PUT`) y «solo lo que cambié» (`PATCH`) | `rutas_entidades.guardar` |
 | Bootstrap **servido desde el repositorio** | `static/lib/bootstrap/` |
 | El CSS del proyecto, **encima** de Bootstrap | `static/marca.css` |
 

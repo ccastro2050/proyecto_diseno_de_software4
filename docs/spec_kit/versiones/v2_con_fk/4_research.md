@@ -140,7 +140,7 @@ un fallo a mitad deja una factura incompleta que nadie pidió.
 
 | | |
 |---|---|
-| **La técnica** | Las vistas son **genéricas**: `/e/<clave>` con los metadatos en `entidades.py`. El tropiezo propio de Flask no es un nombre de clase, es el **nombre del endpoint del blueprint**: dos `@bp.route` con la misma función, o un `url_for` con un nombre que no existe, revientan **al pedir la página**, no al arrancar |
+| **La técnica** | Las vistas son **genéricas**: `/productos` con los metadatos en `entidades.py`. El tropiezo propio de Flask no es un nombre de clase, es el **nombre del endpoint del blueprint**: dos `@bp.route` con la misma función, o un `url_for` con un nombre que no existe, revientan **al pedir la página**, no al arrancar |
 | **La humana** | El menú le habla a una persona. «Roles por usuario» y «Permisos por rol» dicen qué hay ahí; `rol_usuario` y `rutarol` son nombres de tabla |
 
 > **Y de ahí salió una corrección en el auditor:** adivinaba el recurso de cada

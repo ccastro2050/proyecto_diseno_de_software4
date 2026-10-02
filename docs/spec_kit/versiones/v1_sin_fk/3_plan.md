@@ -58,11 +58,11 @@ front_flask/
 ├── Dockerfile                    python:3.12-slim + flask --reload, igual que la API
 ├── entidades.py                  EL REGISTRO: una entrada por recurso
 ├── cliente_api.py                el ÚNICO sitio que sabe de HTTP
-├── rutas_entidades.py            las vistas, genéricas: /e/<clave>
+├── rutas_entidades.py            las vistas, genéricas — con UNA dirección por recurso
 ├── templates/
 │   ├── base.html                 el armazón y el menú
 │   ├── inicio.html
-│   └── entidades/  lista.html · formulario.html
+│   └── entidades/  lista.html   ← el formulario Y la tabla, en UNA pagina
 └── static/
     ├── lib/bootstrap/            SERVIDO DESDE AQUI, nunca por CDN
     └── marca.css                 la capa del proyecto, ENCIMA de Bootstrap

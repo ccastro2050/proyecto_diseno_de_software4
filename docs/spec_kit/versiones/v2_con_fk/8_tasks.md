@@ -97,7 +97,7 @@ escrita. Una fase que no se puede comprobar no es una fase: es una esperanza.
 |---|---|
 | **Archivos** | `entidades.py`: las seis entradas nuevas del registro — y nada más, porque las vistas ya existen |
 | **Lo que importa** | **El desplegable cargado de la API**: muestra el nombre, manda el código. El opcional con «(ninguna)» → `null`. Y las claves foráneas se declaran en el registro, que es lo que hace que el desplegable aparezca solo |
-| **Verificación** | Abrir `/e/cliente`: el desplegable está **lleno**. Crear un cliente **sin** empresa: se crea, con `fkcodempresa: null` |
+| **Verificación** | Abrir `/clientes`: el desplegable está **lleno**. Crear un cliente **sin** empresa: se crea, con `fkcodempresa: null` |
 
 ## Fase 10 — El formulario integrado de factura
 
@@ -114,7 +114,7 @@ escrita. Una fase que no se puede comprobar no es una fase: es una esperanza.
 
 | | |
 |---|---|
-| **Archivos** | la entrada `usuario_con_roles` del registro · `templates/entidades/formulario.html` |
+| **Archivos** | la entrada `usuario_con_roles` del registro · `templates/entidades/lista.html` (el formulario y la tabla, juntos) |
 | **Lo que importa** | **Casillas**, no un desplegable. Marcar **no** llama a la API. Al editar, las casillas arrancan con lo que el usuario ya tiene y la contraseña va **vacía** |
 | **Verificación** | Crear con dos casillas en un envío · editar dejando la contraseña vacía y comprobar que **sigue sirviendo** |
 

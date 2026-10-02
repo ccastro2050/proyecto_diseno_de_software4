@@ -20,6 +20,10 @@ POR QUE AQUI SI VALE LO GENERICO Y EN LA API NO, que es la pregunta obvia:
 LAS REGLAS DE NEGOCIO SIGUEN TODAS EN LA API. Este registro dice cómo se
 DIBUJA cada entidad, no qué se puede hacer con ella.
 
+`url` es la direccion publica del recurso —`/productos`—, la MISMA
+que usa el front de Blazor de los otros dos cursos. La clave del
+diccionario es el nombre interno; la `url` es lo que se ve.
+
 Cada campo es `(nombre, etiqueta, fk)`, y el tercero es la clave de otra
 entidad cuando el campo es una llave foránea: entonces el formulario lo vuelve
 un `<select>` cargado desde la API.
@@ -29,29 +33,29 @@ un `<select>` cargado desde la API.
 ID_ROL_ADMINISTRADOR = 1
 
 ENTIDADES = {
-    "producto": dict(titulo="Productos", endpoint="/api/producto", pk="codigo",
+    "producto": dict(url="productos", titulo="Productos", endpoint="/api/producto", pk="codigo",
         permiso="interfaz.productos",
         campos=[("codigo", "Código", None), ("nombre", "Nombre", None),
                 ("stock", "Stock", None), ("valorunitario", "Valor unitario", None)],
         editable=True),
-    "empresa": dict(titulo="Empresas", endpoint="/api/empresa", pk="codigo",
+    "empresa": dict(url="empresas", titulo="Empresas", endpoint="/api/empresa", pk="codigo",
         permiso="interfaz.empresas",
         campos=[("codigo", "Código", None), ("nombre", "Nombre", None)],
         editable=True),
-    "persona": dict(titulo="Personas", endpoint="/api/persona", pk="codigo",
+    "persona": dict(url="personas", titulo="Personas", endpoint="/api/persona", pk="codigo",
         permiso="interfaz.personas",
         campos=[("codigo", "Código", None), ("nombre", "Nombre", None),
                 ("email", "Email", None), ("telefono", "Teléfono", None)],
         editable=True),
-    "rol": dict(titulo="Roles", endpoint="/api/rol", pk="id",
+    "rol": dict(url="roles", titulo="Roles", endpoint="/api/rol", pk="id",
         permiso="interfaz.roles",
         campos=[("nombre", "Nombre", None)],
         editable=True, pk_generada=True),
-    "ruta": dict(titulo="Rutas", endpoint="/api/ruta", pk="id",
+    "ruta": dict(url="rutas", titulo="Rutas", endpoint="/api/ruta", pk="id",
         permiso="interfaz.rutas",
         campos=[("ruta", "Ruta", None), ("descripcion", "Descripción", None)],
         editable=True, pk_generada=True),
-    "usuario": dict(titulo="Usuarios", endpoint="/api/usuario", pk="email",
+    "usuario": dict(url="usuarios", titulo="Usuarios", endpoint="/api/usuario", pk="email",
         permiso="interfaz.usuarios",
         campos=[("email", "Email", None), ("contrasena", "Contraseña", None)],
         editable=True, ocultar_en_lista=["contrasena"]),
@@ -59,22 +63,22 @@ ENTIDADES = {
     # El tercer elemento de cada campo es la clave de OTRA entidad: cuando
     # está, el formulario lo vuelve un <select> CARGADO DESDE LA API. Esa es
     # la lección de la v2 — la llave foránea se ELIGE, no se escribe.
-    "cliente": dict(titulo="Clientes", endpoint="/api/cliente", pk="id",
+    "cliente": dict(url="clientes", titulo="Clientes", endpoint="/api/cliente", pk="id",
         permiso="interfaz.clientes",
         campos=[("credito", "Crédito", None),
                 ("fkcodpersona", "Persona", "persona"),
                 ("fkcodempresa", "Empresa (opcional)", "empresa")],
         editable=True, pk_generada=True),
-    "vendedor": dict(titulo="Vendedores", endpoint="/api/vendedor", pk="id",
+    "vendedor": dict(url="vendedores", titulo="Vendedores", endpoint="/api/vendedor", pk="id",
         permiso="interfaz.vendedores",
         campos=[("carnet", "Carnet", None), ("direccion", "Dirección", None),
                 ("fkcodpersona", "Persona", "persona")],
         editable=True, pk_generada=True),
-    "rol_usuario": dict(titulo="Roles por usuario", endpoint="/api/rol-usuario",
+    "rol_usuario": dict(url="rol-usuario", titulo="Roles por usuario", endpoint="/api/rol-usuario",
         pk=None, permiso="interfaz.usuarios",
         campos=[("fkemail", "Usuario", "usuario"), ("fkidrol", "Rol", "rol")],
         editable=False, puente=["fkemail", "fkidrol"]),
-    "rutarol": dict(titulo="Permisos por rol", endpoint="/api/rutarol",
+    "rutarol": dict(url="ruta-rol", titulo="Permisos por rol", endpoint="/api/rutarol",
         pk=None, permiso="interfaz.permisos",
         campos=[("fkidruta", "Interfaz o acción", "ruta"), ("fkidrol", "Rol", "rol")],
         editable=False, puente=["fkidruta", "fkidrol"]),

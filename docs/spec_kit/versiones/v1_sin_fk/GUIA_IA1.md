@@ -149,10 +149,9 @@ en un **proyecto propio, en una carpeta nueva y vacía**:
      front_flask\cliente_api.py, front_flask\rutas_entidades.py,`
      front_flask\templates\base.html, front_flask\templates\inicio.html,`
      front_flask\templates\entidades\lista.html,`
-     front_flask\templates\entidades\formulario.html,`
      front_flask\static\marca.css
 
-   # SON ONCE ARCHIVOS, no cuarenta: las vistas son GENERICAS y los seis
+   # SON DIEZ ARCHIVOS, no cuarenta: las vistas son GENERICAS y los seis
    # recursos salen del registro de entidades.py. No hay un archivo por
    # recurso, y por eso tampoco hay un modelo por recurso: el JSON se lee
    # como diccionario, y la forma la define el contrato de la API.
@@ -317,8 +316,8 @@ DOS COSAS QUE CAMBIAN SEGUN LA TABLA, y no se pueden calcar:
     campo vacio—.
 
 Y LA VERSION INCLUYE SU INTERFAZ GRÁFICA: los seis recursos operables desde
-Flask + Jinja2, cada uno con su direccion (/e/producto, /e/empresa,
-/e/persona, /e/rol, /e/ruta, /e/usuario) y sus metadatos en el registro de
+Flask + Jinja2, cada uno con su direccion (/productos, /empresas,
+/personas, /roles, /rutas, /usuarios) y sus metadatos en el registro de
 entidades.py. LAS VISTAS SON GENERICAS A PROPOSITO —un solo juego atiende a
 los seis—, y eso NO contradice la regla de que la API tenga una ruta por
 recurso: la API publica un contrato que otros leen, y un /api/{tabla} lo deja
@@ -490,8 +489,8 @@ DOS COSAS QUE CAMBIAN SEGUN LA TABLA, y no se pueden calcar:
     campo vacio—.
 
 Y LA VERSION INCLUYE SU INTERFAZ GRÁFICA: los seis recursos operables desde
-Flask + Jinja2, cada uno con su direccion (/e/producto, /e/empresa,
-/e/persona, /e/rol, /e/ruta, /e/usuario) y sus metadatos en el registro de
+Flask + Jinja2, cada uno con su direccion (/productos, /empresas,
+/personas, /roles, /rutas, /usuarios) y sus metadatos en el registro de
 entidades.py. LAS VISTAS SON GENERICAS A PROPOSITO —un solo juego atiende a
 los seis—, y eso NO contradice la regla de que la API tenga una ruta por
 recurso: la API publica un contrato que otros leen, y un /api/{tabla} lo deja
