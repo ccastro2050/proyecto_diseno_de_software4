@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block titulo %}Inicio{% endblock %}
+
+{% block contenido %}
+<div class="pb-2 mb-4 border-bottom">
+    <h1 class="mb-1">Facturas</h1>
+    <p class="fs-5 text-body-secondary mb-0">Versión 4 — <strong>el aplicativo completo</strong></p>
+</div>
+
+<p class="mb-4">Las cuatro versiones del curso, y además el adelanto de la v5: una segunda implementación de los repositorios contra SQL Server, elegida por configuración.</p>
+
+{% if menu_entidades %}
+<h2 class="h5 mb-3">Lo que hay</h2>
+<div class="row g-3">
+    {% for clave, e in menu_entidades.items() %}
+    <div class="col-12 col-sm-6 col-lg-4">
+        <a class="card h-100 text-decoration-none" href="{{ url_for('entidades.lista', clave=clave) }}">
+            <div class="card-body">
+                <h3 class="h6 card-title mb-1">{{ e.titulo }}</h3>
+                <p class="card-text small text-body-secondary mb-0"><code>{{ e.endpoint }}</code></p>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="card bg-body-tertiary border-0 mt-4">
+    <div class="card-body">
+        <h2 class="h6 card-title">La interfaz gráfica y la API son dos procesos distintos</h2>
+        <p class="card-text small mb-0">
+            Y se puede comprobar: apague la API con
+            <code>docker compose stop api-facturas</code> y vuelva a cargar cualquier
+            sección. El menú sigue en pie, con un aviso, y <strong>sin una sola
+            fila</strong>. Si siguiera mostrando los datos, estaría leyendo de donde
+            no debe.
+        </p>
+    </div>
+</div>
+{% endblock %}

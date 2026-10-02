@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block titulo %}Nueva factura{% endblock %}
+{% block contenido %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h1 class="card-title h3 mb-2">Nueva factura</h1>
+                <p class="text-muted small">Usted elige QUIÉN y QUÉ; los
+                    subtotales, el total y el stock los calcula la base de
+                    datos — este formulario no multiplica nada.</p>
+                <form method="post">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="fkidcliente">Cliente</label>
+                            <select class="form-select" id="fkidcliente" name="fkidcliente">
+                                <option value="">— seleccione —</option>
+                                {% for valor, texto in clientes %}
+                                <option value="{{ valor }}">{{ texto }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="fkidvendedor">Vendedor</label>
+                            <select class="form-select" id="fkidvendedor" name="fkidvendedor">
+                                <option value="">— seleccione —</option>
+                                {% for valor, texto in vendedores %}
+                                <option value="{{ valor }}">{{ texto }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <h2 class="h5">Renglones <span class="text-muted small">(mínimo 1)</span></h2>
+                    {% for i in renglones %}
+                    <div class="row align-items-end">
+                        <div class="col-8 col-md-9 mb-2">
+                            <select class="form-select" name="producto_{{ i }}">
+                                <option value="">— producto —</option>
+                                {% for valor, texto in productos %}
+                                <option value="{{ valor }}">{{ texto }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-4 col-md-3 mb-2">
+                            <input class="form-control" name="cantidad_{{ i }}"
+                                   type="number" min="1" placeholder="cantidad">
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <div class="d-flex gap-2 mt-3">
+                        <button class="btn btn-success" type="submit">Facturar</button>
+                        <a class="btn btn-outline-secondary" href="{{ url_for('facturas.lista') }}">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block titulo %}{{ cfg.titulo }}{% endblock %}
+{% block contenido %}
+{% set ocultos = cfg.get("ocultar_en_lista", []) %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h2 mb-0">{{ cfg.titulo }}</h1>
+    <a class="btn btn-primary" href="{{ url_for('entidades.crear', clave=clave) }}">
+        {{ "Asignar" if cfg.get("puente") else "Nuevo" }}</a>
+</div>
+
+{% if datos %}
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead><tr>
+            {% if cfg.get("pk_generada") %}<th>Id</th>{% endif %}
+            {% for n, etiqueta, _ in cfg.campos if n not in ocultos %}<th>{{ etiqueta }}</th>{% endfor %}
+            <th class="text-end">Acciones</th>
+        </tr></thead>
+        <tbody>
+        {% for d in datos %}
+            <tr>
+                {% if cfg.get("pk_generada") %}<td class="font-monospace">{{ d[cfg.pk] }}</td>{% endif %}
+                {% for n, _, _ in cfg.campos if n not in ocultos %}
+                <td>{{ d.get(n, "") if d.get(n) is not none else "—" }}</td>
+                {% endfor %}
+                <td class="text-end">
+                {% if cfg.get("puente") %}
+                    {# PK compuesta: el DELETE exige la pareja EXACTA #}
+                    <form class="d-inline" method="post"
+                          action="{{ url_for('entidades.eliminar_puente', clave=clave, a=d[cfg.pk[0]], b=d[cfg.pk[1]]) }}"
+                          onsubmit="return confirm('¿Retirar esta asignación?');">
+                        <button class="btn btn-sm btn-danger" type="submit">Quitar</button>
+                    </form>
+                {% else %}
+                    {% if cfg.editable %}
+                    <a class="btn btn-sm btn-outline-primary"
+                       href="{{ url_for('entidades.editar', clave=clave, pk=d[cfg.pk]) }}">Editar</a>
+                    {% endif %}
+                    <form class="d-inline" method="post"
+                          action="{{ url_for('entidades.eliminar', clave=clave, pk=d[cfg.pk]) }}"
+                          onsubmit="return confirm('¿Eliminar este registro?');">
+                        <button class="btn btn-sm btn-danger" type="submit">Eliminar</button>
+                    </form>
+                {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-secondary">No hay registros para mostrar.</div>
+{% endif %}
+{% endblock %}

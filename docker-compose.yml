@@ -105,6 +105,33 @@ services:
         condition: service_completed_successfully
         # ↑ v4: …y cuando el inicializador de SQL Server TERMINÓ BIEN.
 
+  # ------------------------------------------------------------
+  # LA INTERFAZ GRAFICA (Flask + Jinja2)
+  #
+  # Contenedor aparte: la interfaz y la API son dos procesos distintos que se
+  # hablan por HTTP. Apague la API y la interfaz sigue en pie, con su aviso.
+  # ------------------------------------------------------------
+  front-flask:
+    build: ./front_flask
+    container_name: facturas-front-diseno-v4
+    ports:
+      - "8081:8081"
+    volumes:
+      # El codigo montado: Flask en modo depuracion recarga al guardar.
+      - ./front_flask:/app
+    environment:
+      PUERTO: "8081"
+      # El NOMBRE del servicio, no localhost: dentro del contenedor del front,
+      # localhost seria el front mismo.
+      API_FACTURAS_URL: "http://api-facturas:8055"
+      # La clave que FIRMA la cookie de sesion. En claro a proposito: es de
+      # desarrollo y este repositorio es material de curso. Lo que importa es
+      # que el codigo la lea de la configuracion y no la lleve escrita adentro.
+      CLAVE_SESION: "ClaveDeDesarrolloDelCursoDisenoDeSoftware_2026_2"
+    depends_on:
+      # NO depende de la base: el front no tiene nada que hacer con ella.
+      - api-facturas
+
 volumes:
   pgdata:      # declaración del volumen nombrado (la "memoria" de la BD)
   mssqldata:   # v4: la "memoria" del segundo motor

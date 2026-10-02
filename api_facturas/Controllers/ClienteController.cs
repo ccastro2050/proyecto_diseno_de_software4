@@ -5,12 +5,27 @@ using ApiFacturas.Excepciones;
 using ApiFacturas.Modelos;
 using ApiFacturas.Peticiones;
 using ApiFacturas.Servicios;
+using ApiFacturas.Autorizacion;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ApiFacturas.Controllers;
 
 [ApiController]
 [Route("api/cliente")]
+// v3 — LA PUERTA. Antes de la v3 este controlador era publico:
+// cualquiera que llegara a la direccion hacia cualquier cosa.
+//
+//   [Authorize]      exige TOKEN. Sin token, o con uno alterado o
+//                    vencido: 401 -«no se quien es usted»-.
+//   [ExigePermiso]   exige PERMISO. Con token valido pero sin el
+//                    permiso: 403 -«se quien es, y no puede»-.
+//
+// Y el permiso se consulta EN CADA PETICION contra la base, no se lee
+// del token: por eso quitarle el permiso a un rol surte efecto sin que
+// la persona vuelva a identificarse.
+[Authorize]
+[ExigePermiso("interfaz.clientes")]
 public class ClienteController : ControllerBase
 {
     private readonly IServicioCliente _servicio;
@@ -74,6 +89,19 @@ public class ClienteController : ControllerBase
             await _servicio.CrearAsync(entidad);
             return Ok(new { estado = 200, mensaje = "Cliente creado exitosamente." });
         }
+        catch (ConflictoExcepcion e)
+        {
+            // 409, y NO 422: el dato tiene la forma correcta -lo paso la
+            // validacion de la peticion- y lo que se rompe es el ESTADO de la
+            // base: la clave foranea apunta a una fila que no existe, la clave
+            // ya esta usada, o hay otra fila que depende de esta.
+            return StatusCode(409, new
+            {
+                estado = 409,
+                mensaje = "La operacion choca con los datos que ya existen.",
+                detalle = e.Message,
+            });
+        }
         catch (Exception e)
         {
             // PK duplicada o FK inexistente: la BD rechaza → 500 con detalle:
@@ -104,6 +132,19 @@ public class ClienteController : ControllerBase
         {
             return StatusCode(404, new { estado = 404, mensaje = "Cliente no encontrado.", detalle = e.Message });
         }
+        catch (ConflictoExcepcion e)
+        {
+            // 409, y NO 422: el dato tiene la forma correcta -lo paso la
+            // validacion de la peticion- y lo que se rompe es el ESTADO de la
+            // base: la clave foranea apunta a una fila que no existe, la clave
+            // ya esta usada, o hay otra fila que depende de esta.
+            return StatusCode(409, new
+            {
+                estado = 409,
+                mensaje = "La operacion choca con los datos que ya existen.",
+                detalle = e.Message,
+            });
+        }
         catch (Exception e)
         {
             return StatusCode(500, new { estado = 500, mensaje = "Error interno.", detalle = e.Message });
@@ -130,6 +171,19 @@ public class ClienteController : ControllerBase
         {
             return StatusCode(404, new { estado = 404, mensaje = "Cliente no encontrado.", detalle = e.Message });
         }
+        catch (ConflictoExcepcion e)
+        {
+            // 409, y NO 422: el dato tiene la forma correcta -lo paso la
+            // validacion de la peticion- y lo que se rompe es el ESTADO de la
+            // base: la clave foranea apunta a una fila que no existe, la clave
+            // ya esta usada, o hay otra fila que depende de esta.
+            return StatusCode(409, new
+            {
+                estado = 409,
+                mensaje = "La operacion choca con los datos que ya existen.",
+                detalle = e.Message,
+            });
+        }
         catch (Exception e)
         {
             return StatusCode(500, new { estado = 500, mensaje = "Error interno.", detalle = e.Message });
@@ -151,6 +205,19 @@ public class ClienteController : ControllerBase
         catch (NoEncontradoExcepcion e)
         {
             return StatusCode(404, new { estado = 404, mensaje = "Cliente no encontrado.", detalle = e.Message });
+        }
+        catch (ConflictoExcepcion e)
+        {
+            // 409, y NO 422: el dato tiene la forma correcta -lo paso la
+            // validacion de la peticion- y lo que se rompe es el ESTADO de la
+            // base: la clave foranea apunta a una fila que no existe, la clave
+            // ya esta usada, o hay otra fila que depende de esta.
+            return StatusCode(409, new
+            {
+                estado = 409,
+                mensaje = "La operacion choca con los datos que ya existen.",
+                detalle = e.Message,
+            });
         }
         catch (Exception e)
         {
