@@ -40,6 +40,16 @@ app.register_blueprint(bp_tablero)
 app.register_blueprint(bp_facturas)
 
 
+# Las tarjetas del inicio que NO salen del registro, porque no son
+# un CRUD de campos: la factura se emite y se anula, el usuario con sus
+# roles viaja con casillas, y el tablero no tiene tabla.
+TARJETAS_SUELTAS = [
+    ("/facturas", "Facturas", 2, "Maestro-detalle: la factura y sus renglones, en un solo envío"),
+    ("/usuarios-con-roles", "Usuarios y roles", 2, "El usuario y sus roles, con casillas"),
+    ("/tablero", "Tablero", 4, "Diez consultas que cruzan cuatro o más tablas"),
+]
+
+
 @app.context_processor
 def menu():
     """EL MENU, ARMADO CON LOS PERMISOS DE QUIEN ESTA IDENTIFICADO.
@@ -62,7 +72,7 @@ def menu():
                 if e.get("permiso") in permitidas}
     return {"menu_entidades": visibles, "hay_sesion": "usuario" in session,
             "usuario_actual": session.get("usuario"),
-            "roles_actuales": session.get("roles", [])}
+            "roles_actuales": session.get("roles", []), "tarjetas_sueltas": TARJETAS_SUELTAS}
 
 
 def login_requerido(vista):
