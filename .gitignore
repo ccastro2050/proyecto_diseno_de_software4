@@ -8,3 +8,8 @@ obj/
 # Archivos de usuario de IDEs
 *.user
 .vs/
+
+# Bytecode de Python: lo genera el interprete en cada arranque y cambia solo.
+# Versionarlo ensucia cada diff con archivos que nadie escribio.
+__pycache__/
+*.pyc

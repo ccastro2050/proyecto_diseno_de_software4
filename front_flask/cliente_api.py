@@ -313,3 +313,24 @@ def eliminar_usuario_con_roles(email):
     if r.status_code in (200, 204):
         return True, []
     return False, _mensaje(r)
+
+def reemplazar(endpoint: str, clave, datos: dict):
+    """PUT — reemplaza la ficha COMPLETA.
+
+    LA DIFERENCIA CON `actualizar` -que manda PATCH- es la leccion de la v1, y
+    se ve con el mismo cuerpo:
+
+        PUT  {"stock": 99}  -> 422, porque faltan los demas campos
+        PATCH {"stock": 99} -> 200, porque solo toca lo que llega
+
+    No es un capricho del servidor: PUT dice «la ficha queda ASI», y una ficha
+    a la que le faltan campos no es una ficha. PATCH dice «cambiame esto».
+
+    Por eso aqui viaja TODO el formulario, incluso lo que no se toco.
+    """
+    r = _llamar("PUT", f"{endpoint}/{clave}", json=datos, headers=_cabecera())
+    if r is None:
+        return False, ["El servicio no esta disponible."]
+    if r.status_code in (200, 204):
+        return True, []
+    return False, _mensaje(r)
