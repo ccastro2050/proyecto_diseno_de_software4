@@ -103,7 +103,7 @@ escrita. Una fase que no se puede comprobar no es una fase: es una esperanza.
 
 | | |
 |---|---|
-| **Archivos** | `rutas_facturas.py` · `templates/facturas/` |
+| **Archivos** | `rutas_facturas.py` (tres rutas: la tabla, el formulario y el detalle) · `templates/facturas/lista.html` · `formulario.html` · `detalle.html` |
 | **Lo que importa** | **Agregar un renglón NO llama a la API.** El total se muestra y **no se envía**. El botón dice **anular** |
 | **Verificación** | **Agregar tres renglones, quitar uno, emitir → llegan DOS.** Y el JSON que sale **no lleva** `total` |
 

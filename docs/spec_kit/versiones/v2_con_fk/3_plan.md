@@ -172,7 +172,9 @@ repetido:** registrar dos veces la misma interfaz no rompe nada —gana el
 |---|---|
 | `/clientes` | **Dos** desplegables, uno **opcional** con «(ninguna)» → `null` |
 | `/vendedores` | Uno obligatorio: el mismo patrón, sin la opción vacía |
-| `/facturas` | **El maestro-detalle.** La pieza central, y la única con rutas propias |
+| `/facturas` | La **tabla** de facturas, con «Ver» y «Anular» |
+| `/facturas/nueva` | **El maestro-detalle.** La pieza central — y por eso tiene pantalla propia |
+| `/facturas/<n>` | Una factura con sus renglones, **con los subtotales que calculó la base** |
 | `/rol-usuario` | La puente cruda: **sin editar**, y el quitar con dos claves |
 | `/ruta-rol` | La otra puente, **con el aviso de que todavía no aplica nada** |
 
