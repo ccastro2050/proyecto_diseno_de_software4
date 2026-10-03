@@ -134,7 +134,46 @@ a…", **párenla**: eso es una ambigüedad de la especificación disfrazada de
 detalle de implementación, y la respuesta va a la spec — no solo al chat.
 El chat se cierra; la spec queda.
 
-## 4. Los dos repositorios (y las reglas de GitHub)
+## 4. EL SELLO DE ESTE CURSO: los diagramas Mermaid obligatorios
+
+Esto es Diseño de Software: **el diseño se DIBUJA, y se dibuja DENTRO de
+los `.md` del spec kit** — como bloques ```` ```mermaid ```` (texto que
+GitHub renderiza y que la IA lee como parte de la especificación; jamás
+imágenes pegadas). El ejemplo vivo es el spec kit de
+[proyecto_diseno_de_software1](https://github.com/ccastro2050/proyecto_diseno_de_software1/tree/main/docs/spec_kit):
+cada diagrama exigido aquí existe allá, con su guía de lectura.
+
+**Qué diagrama va en qué documento (obligatorios por versión):**
+
+| Documento | Diagrama(s) Mermaid obligatorio(s) | Tipo Mermaid | Qué debe mostrar |
+|---|---|---|---|
+| `1_constitution.md` | **La regla de dependencias** (una sola vez, no por versión) | `flowchart` | Las capas del equipo y las ÚNICAS flechas permitidas (cruzando por interfaces/contratos) |
+| `2_spec.md` | **Diagrama de contexto** | `flowchart` | El sistema de ESTA versión, sus vecinos (usuarios, front, BD, servicios externos) y qué viaja por cada flecha |
+| `3_plan.md` | **Despliegue** + **clases** + **secuencia del camino feliz** | `flowchart` · `classDiagram` · `sequenceDiagram` | Los contenedores/servicios del compose con sus puertos · la rebanada principal con sus interfaces · UNA operación completa viajando por las capas |
+| `5_data_model.md` | **Entidad-relación** | `erDiagram` | Las tablas de la versión con PK/FK/cardinalidades (y qué columnas escribe la BD, no la API) |
+| `6_contracts.md` | **Las secuencias de ERROR** | `sequenceDiagram` | Mínimo dos: el 404 (quién decide "no existe") y el 422/400 (dónde corta la validación) — con `Note` explicando qué capa aporta qué |
+| `7_quickstart.md` | **El ciclo de validación** | `flowchart` | Arrancar → probar criterios → verde = tag / rojo = corregir |
+| `8_tasks.md` | **El orden de fases con compuertas** | `flowchart` | Cada fase con su "Verificar:" como condición de la flecha |
+| `4_research.md` | (sin diagrama obligatorio) | — | Es el registro de ADRs: texto con opciones, criterios y consecuencias; una tabla comparativa vale más que un dibujo aquí |
+
+**Las tres reglas de los diagramas:**
+
+1. **Embebidos y en texto**: bloques ```` ```mermaid ```` dentro del
+   `.md`. Un PNG pegado NO cumple (no se versiona con diff ni lo lee la
+   IA cuando le entreguen la spec).
+2. **Cada diagrama con su guía de lectura**: 1-3 frases debajo diciendo
+   cómo leerlo (cajas = quién, flechas = qué). Si el diagrama necesita
+   media página de explicación, simplifique el diagrama.
+3. **El diagrama es contrato**: si la secuencia dice que el servicio
+   lanza la excepción y el controller la traduce, el código debe hacer
+   EXACTAMENTE eso. Diagrama y código en desacuerdo = criterio de diseño
+   no cumplido.
+
+> En la sustentación individual se puede pedir: "léame su diagrama de
+> secuencia del 404" o "¿por qué esta flecha no puede existir en su
+> diagrama de dependencias?" — los diagramas son de TODO el equipo.
+
+## 5. Los dos repositorios (y las reglas de GitHub)
 
 El sistema son **DOS proyectos separados**, cada uno con su repositorio:
 
@@ -151,7 +190,7 @@ El sistema son **DOS proyectos separados**, cada uno con su repositorio:
    Sin acceso del profesor, la entrega no existe.
 3. El spec kit vive en el repo de la API (`docs/spec_kit/`).
 
-### 4.1 El flujo de ramas (obligatorio desde la v1)
+### 5.1 El flujo de ramas (obligatorio desde la v1)
 
 - **NADIE trabaja en `main`. Nunca.** Ni un commit directo.
 - **Cada estudiante tiene SU rama** (nómbrela con su nombre:
@@ -175,7 +214,7 @@ rama-andres  ──●──●──●──┤ PR
 main         ────────●──●──●── tag v1 ──●──●── tag v2 ──…
 ```
 
-## 5. Secretos: variables de entorno, SIEMPRE
+## 6. Secretos: variables de entorno, SIEMPRE
 
 **Regla innegociable:** ningún secreto va escrito en el código ni en
 archivos versionados. Son secretos: la **cadena de conexión** a la BD (y
@@ -208,7 +247,7 @@ Cómo cumplirla:
 En la rúbrica: un secreto quemado en el código **anula el criterio de
 seguridad de la versión**.
 
-## 6. Reglas técnicas del sistema (aplican a todos los módulos)
+## 7. Reglas técnicas del sistema (aplican a todos los módulos)
 
 - **API REST**: JSON siempre; códigos HTTP correctos (200/201, 400, 401,
   403, 404, 422, 500); y **un juego de endpoints ESPECÍFICO por cada tabla**:
@@ -224,7 +263,7 @@ seguridad de la versión**.
   El borrado es **lógico** (`activo = 0` / `activo = FALSE`) y los listados
   filtran los inactivos.
 
-### 6.1 Por qué el proyecto pide endpoints específicos y no una API genérica
+### 7.1 Por qué el proyecto pide endpoints específicos y no una API genérica
 
 Al ver ocho o diez tablas parecidas, la idea aparece sola: **una sola ruta con
 el nombre de la tabla como parámetro** —`GET /api/{tabla}`, `POST
@@ -340,7 +379,7 @@ restricción, y no una preferencia de quien programa.
 > del curso con la fórmula y las referencias: `CONCEPTOS_IDENTIDAD_VISUAL.md`.
 
 
-## 7. Rúbrica de evaluación
+## 8. Rúbrica de evaluación
 
 Aplica en cada versión; el profesor asigna el peso por criterio. Cada
 criterio se califica en una de dos franjas: **Cumple (de 3.0 a 5.0**,
