@@ -89,8 +89,8 @@
         <td class="text-end">
         {% if cfg.get("puente") %}
           <form class="d-inline" method="post"
-                action="{{ url_for('entidades.retirar_puente', clave=clave, a=d[cfg.pk[0]], b=d[cfg.pk[1]]) }}"
-                onsubmit="return confirm('¿Retirar esta asignación?');">
+                action="{{ url_for('entidades.quitar_puente', clave=clave, a=d[cfg.pk[0]], b=d[cfg.pk[1]]) }}"
+                onsubmit="return confirm('¿Quitar esta asignación?');">
             <button class="btn btn-sm btn-danger">Quitar</button>
           </form>
         {% else %}
@@ -98,11 +98,13 @@
           <a class="btn btn-sm btn-outline-primary"
              href="{{ url_for('entidades.lista', clave=clave, editar=d[cfg.pk]) }}">Editar</a>
           {% endif %}
-          {# El borrado es LOGICO, asi que la palabra es RETIRAR. #}
+          {# El DELETE del ejemplo borra la fila de verdad, asi que la
+             palabra es ELIMINAR. En el proyecto de aula, donde el borrado si
+             es logico, sera RETIRAR. #}
           <form class="d-inline" method="post"
-                action="{{ url_for('entidades.retirar', clave=clave, pk=d[cfg.pk]) }}"
-                onsubmit="return confirm('¿Retirar este registro?');">
-            <button class="btn btn-sm btn-danger">Retirar</button>
+                action="{{ url_for('entidades.eliminar', clave=clave, pk=d[cfg.pk]) }}"
+                onsubmit="return confirm('¿Eliminar este registro?');">
+            <button class="btn btn-sm btn-danger">Eliminar</button>
           </form>
         {% endif %}
         </td>

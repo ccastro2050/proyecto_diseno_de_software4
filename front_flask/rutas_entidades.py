@@ -167,8 +167,8 @@ def guardar(clave, pk):
     return redirect(url_for("entidades.lista", clave=clave, editar=pk))
 
 
-@bp.route("/e/<clave>/<pk>/retirar", methods=["POST"])
-def retirar(clave, pk):
+@bp.route("/e/<clave>/<pk>/eliminar", methods=["POST"])
+def eliminar(clave, pk):
     cfg = _config(clave)
     ok, errores = cliente_api.eliminar(cfg["endpoint"], pk)
     flash("Registro retirado." if ok else " ".join(errores),
@@ -176,8 +176,8 @@ def retirar(clave, pk):
     return redirect(url_for("entidades.lista", clave=clave))
 
 
-@bp.route("/e/<clave>/<a>/<b>/retirar", methods=["POST"])
-def retirar_puente(clave, a, b):
+@bp.route("/e/<clave>/<a>/<b>/quitar", methods=["POST"])
+def quitar_puente(clave, a, b):
     """El borrado de una tabla PUENTE necesita LAS DOS claves.
 
     Su clave primaria son las dos columnas juntas, asi que con una sola no se
@@ -208,7 +208,7 @@ for _clave, _cfg in ENTIDADES.items():
                     defaults={"clave": _clave}, methods=["GET", "POST"])
     bp.add_url_rule("/%s/<pk>/guardar" % _url, "guardar", guardar,
                     defaults={"clave": _clave}, methods=["POST"])
-    bp.add_url_rule("/%s/<pk>/retirar" % _url, "retirar", retirar,
+    bp.add_url_rule("/%s/<pk>/eliminar" % _url, "eliminar", eliminar,
                     defaults={"clave": _clave}, methods=["POST"])
-    bp.add_url_rule("/%s/<a>/<b>/retirar" % _url, "retirar_puente",
-                    retirar_puente, defaults={"clave": _clave}, methods=["POST"])
+    bp.add_url_rule("/%s/<a>/<b>/quitar" % _url, "quitar_puente",
+                    quitar_puente, defaults={"clave": _clave}, methods=["POST"])
