@@ -8,6 +8,9 @@
 > [Innovación Curricular](modulo_innovacion_curricular.md) ·
 > [Mapa de Conocimiento](modulo_mapa_conocimiento.md) ·
 > [Proyecto Completo](proyecto_completo.md).
+>
+> **Cada equipo de trabajo tiene sus propios repositorios en GitHub** y hace
+> su propia entrega (§5).
 
 > ### Y lo que más sube y baja la nota no es el código: es poder explicarlo
 >
@@ -16,9 +19,21 @@
 > cuenta en voz alta. Qué hace, por qué está así, qué pasa si falla y qué
 > cambiaría.
 >
-> **Un equipo puede pasar todos los criterios técnicos y sacar 2.9 ahí.** Es
-> el único criterio que **no se puede delegar** —ni a un compañero ni a una
-> IA—, y está desarrollado en la §2.2.
+> Es la parte de la nota que **cada quien se gana contando su propio
+> trabajo**, y está desarrollada en la §2.2. Quien entendió lo que hizo, lo
+> cuenta sin preparar nada.
+
+---
+
+## 0. Qué hay en esta carpeta y para qué sirve cada cosa
+
+| | Qué es | Para qué le sirve |
+|---|---|---|
+| **`docs/0_METODOLOGIA.md`** (este documento) | Cómo se trabaja: las cuatro versiones, qué se entrega en cada una, los diagramas obligatorios, el calendario, las reglas de Git y la rúbrica | Saber **qué** hay que hacer, **cuándo** y **cómo se califica** |
+| **`docs/VERSION_2.md`** | El detalle de la versión 2, criterio por criterio | Saber qué se espera en la entrega que viene |
+| **`docs/conceptos/`** · 13 documentos | Los temas del curso explicados: elicitación, historias de usuario, plan de desarrollo, control de acceso, Docker, el flujo de una petición, POO, SOLID y capas, ACID, programación asincrónica, pruebas, SDD y spec kit, y el tutorial de SQLTools | Estudiar el tema **antes** de escribir sus propios documentos, y tener de dónde copiar el formato |
+| **`docs/modulo_*.md`** y `proyecto_completo.md` | Lo QUE construye cada equipo: su módulo | Saber **qué** construir |
+| **`db_scripts/`** | Los scripts de base de datos de los módulos | Partir del esquema, no inventarlo |
 
 ---
 
@@ -55,9 +70,9 @@ se reabre. Estudien el `docs/spec_kit/` de esos repos: ese es el molde.
    versiones anteriores deben seguir pasando (las versiones son
    acumulativas).
 6. **Lo que usted entrega, usted lo explica**: desde la v2 se califica en voz
-   alta, sobre el archivo que el profesor elija, y **cuenta el 20 % de la
-   versión** (§2.2). Código que nadie del equipo puede explicar es código que
-   no se entregó: se recibió.
+   alta, sobre el archivo que el profesor elija, y cuenta el 20 % de la
+   versión (§2.2). Entregar código que el equipo entiende es la mitad del
+   trabajo; poder contarlo es la otra.
 
 ## 2. Las 4 versiones del proyecto de aula
 
@@ -133,9 +148,8 @@ comprueba **hablando**, y es lo que separa haber construido de haber recibido.
 >
 > **Por qué pesa tanto, dicho sin rodeos:** es el único criterio que **no se
 > puede delegar**. La API puede funcionar porque una IA la escribió bien; el
-> front puede verse bien por lo mismo. **Explicar por qué está así solo lo
-> puede hacer quien entendió.** Un equipo puede entregar un sistema perfecto y
-> sacar 2.9 en este criterio — y es correcto que así sea.
+> front puede verse bien por lo mismo. **Explicar por qué está así es lo que
+> muestra que usted lo entendió** — y es lo que este criterio reconoce.
 
 **Las cuatro preguntas son siempre las mismas**, así que no hay sorpresa:
 
@@ -175,8 +189,45 @@ Un comentario que sirve dice **por qué**, no **qué**:
 | **Lo que NO se puede** | Entregar algo que usted no pueda contar. Si la IA lo escribió y usted no lo entendió, **todavía no está entregado**: está pegado |
 | **La consecuencia práctica** | Pídale a la IA que **explique** lo que genera, y después **compruébelo**: haga que falle, mire el error, bórrele una línea y vea qué se rompe. Eso es lo que no se puede recitar |
 
-
 ## 3. El spec kit que cada equipo ESCRIBE (por versión)
+
+### Lo que se entrega son TRES cosas, y las tres se califican
+
+| | Qué | Cuántas |
+|---|---|---|
+| **1** | **Los `.md` del spec kit**, por versión —**con sus diagramas y sus historias de usuario adentro** (§4) | Una carpeta por versión. **La constitución es la MISMA para todas las versiones**: se escribe una vez y no se repite por versión |
+| **2** | **Los prompts de cada integrante**, los que **junto con el spec kit generan el código** | Uno por integrante, con su nombre. No uno del equipo |
+| **3** | **El código** generado con esos spec kit y esos prompts | El sistema de la versión |
+
+Las tres van juntas: el spec kit dice **qué** construir, el prompt es **cómo
+se le pidió**, y el código es **lo construido**. Falta una y no se puede ver
+de dónde salió lo otro.
+
+### Y así se comprueba: el profesor los vuelve a ejecutar
+
+**El profesor toma el spec kit del equipo y los prompts de cada integrante,
+los ejecuta en OTRA IA, y compara.** Lo que espera es que el código que le
+salga **corresponda en gran medida** con el código que está en el
+repositorio.
+
+Eso es lo que hace que las tres piezas tengan que ser de verdad:
+
+- si el spec kit no dice lo que el código hace, el resultado no se parece;
+- si los prompts no son los que se usaron, el resultado no se parece;
+- y si el código salió de otra parte, tampoco.
+
+**No se trata de que salga idéntico** —dos IA no escriben el mismo archivo—,
+sino de que salga **lo mismo**: las mismas tablas, los mismos endpoints, las
+mismas capas, las mismas reglas.
+
+**Y en este curso el spec kit se juzga por su DISEÑO**: las historias de
+usuario y los diagramas de la §4 son parte de lo entregable, no un adorno
+del documento. Un spec kit sin sus secuencias no está completo.
+
+Y lo que ninguna IA puede devolver es la otra mitad de la nota:
+**explicarlo**. En la sustentación cada integrante cuenta en voz alta el
+archivo que el profesor elija de lo que él entregó (§2.2) — el código se
+puede volver a generar; el entendimiento no.
 
 Antes de programar cada versión, el equipo escribe su especificación en
 `docs/spec_kit/` del repositorio de la API (el mismo formato del curso):
@@ -186,6 +237,11 @@ docs/spec_kit/
 ├── 1_constitution.md            ← UNA vez (los principios del equipo: stack
 │                                   elegido, capas, español, borrado lógico,
 │                                   secretos por variables de entorno…)
+│                                   Es la MISMA para las cuatro versiones
+├── 0_historias_de_usuario.md    ← LAS HISTORIAS DE USUARIO del módulo, con
+│                                   su criterio de aceptación cada una. Se
+│                                   amplía versión por versión, y de aquí
+│                                   salen las secuencias de la §4
 └── versiones/
     ├── 0_mapa_versiones.md      ← la tabla de la sección 2, con estados
     ├── v1_<nombre>/             ← 2_spec.md · 3_plan.md · 4_research.md ·
@@ -258,6 +314,7 @@ cada diagrama exigido aquí existe allá, con su guía de lectura.
 | Documento | Diagrama(s) Mermaid obligatorio(s) | Tipo Mermaid | Qué debe mostrar |
 |---|---|---|---|
 | `1_constitution.md` | **La regla de dependencias** (una sola vez, no por versión) | `flowchart` | Las capas del equipo y las ÚNICAS flechas permitidas (cruzando por interfaces/contratos) |
+| `0_historias_de_usuario.md` | **Una SECUENCIA por historia** de la versión | `sequenceDiagram` | Quién empieza la historia, por qué capas pasa y qué devuelve. **La historia dice qué quiere el usuario; la secuencia dice cómo se cumple** |
 | `2_spec.md` | **Diagrama de contexto** | `flowchart` | El sistema de ESTA versión, sus vecinos (usuarios, front, BD, servicios externos) y qué viaja por cada flecha |
 | `3_plan.md` | **Despliegue** + **clases** + **secuencia del camino feliz** | `flowchart` · `classDiagram` · `sequenceDiagram` | Los contenedores/servicios del compose con sus puertos · la rebanada principal con sus interfaces · UNA operación completa viajando por las capas |
 | `5_data_model.md` | **Entidad-relación** | `erDiagram` | Las tablas de la versión con PK/FK/cardinalidades (y qué columnas escribe la BD, no la API) |
@@ -265,6 +322,25 @@ cada diagrama exigido aquí existe allá, con su guía de lectura.
 | `7_quickstart.md` | **El ciclo de validación** | `flowchart` | Arrancar → probar criterios → verde = tag / rojo = corregir |
 | `8_tasks.md` | **El orden de fases con compuertas** | `flowchart` | Cada fase con su "Verificar:" como condición de la flecha |
 | `4_research.md` | (sin diagrama obligatorio) | — | Es el registro de ADRs: texto con opciones, criterios y consecuencias; una tabla comparativa vale más que un dibujo aquí |
+
+### Las historias de usuario y las secuencias: el par que define este curso
+
+En los otros cursos del semestre el diseño se da por supuesto: se escribe la
+spec y se programa. **Aquí el diseño es el entregable**, y se califica en dos
+piezas que van juntas:
+
+| | Qué es | Dónde va |
+|---|---|---|
+| **La historia de usuario** | Qué quiere alguien y para qué, con su **criterio de aceptación** —cómo se sabe que quedó— | `0_historias_de_usuario.md` |
+| **Su diagrama de secuencia** | Cómo se cumple esa historia: quién la empieza, por qué capas pasa, qué devuelve y dónde se corta si falla | el mismo archivo, debajo de la historia |
+
+**Una historia sin su secuencia es una intención; una secuencia sin su
+historia es un dibujo.** Las dos, y en la misma página.
+
+Y la secuencia se lee contra el código: las capas del diagrama tienen que ser
+las del repositorio, con los mismos nombres. Si el diagrama dice
+«servicio → repositorio» y en el código el controlador habla con la base de
+datos, el diagrama no describe el sistema: lo adorna.
 
 **Las tres reglas de los diagramas:**
 
@@ -488,7 +564,6 @@ restricción, y no una preferencia de quien programa.
 > decir para qué sirve ese color y cuál se usa en su lugar. Hay un documento
 > del curso con la fórmula y las referencias: `CONCEPTOS_IDENTIDAD_VISUAL.md`.
 
-
 ## 8. Rúbrica de evaluación
 
 Aplica en cada versión; el profesor asigna el peso por criterio. Cada
@@ -507,16 +582,17 @@ según la calidad de lo entregado**)** o **No cumple (de 0 a 2.9)**.
 | **Dashboard y consultas (v4)** | 10 consultas de 4+ tablas con gráficos claros | Menos de 10 consultas, consultas de menos de 4 tablas, o sin dashboard |
 | **Imagen corporativa y responsive (v4)** | **Existe un manual de marca** —propio o el del ejemplo— y la interfaz gráfica lo cumple: los colores y las tipografías salen de él, no de un gusto; todo responsive | No hay manual, o lo hay y la interfaz gráfica no lo respeta, o no es responsive |
 | **Publicación (v4)** | Publicado, funcional, con secretos en variables de entorno del servidor | No publicado o con secretos expuestos |
+| **DISEÑO: historias de usuario y diagramas** | Cada historia de la versión está escrita con su criterio de aceptación **y su diagrama de secuencia**; los diagramas obligatorios de la §4 están, embebidos en Mermaid y con su guía de lectura; **las capas del diagrama son las del código**, con los mismos nombres | Faltan historias o secuencias; los diagramas son imágenes pegadas o no están; o el diagrama no corresponde con lo que hace el código |
+| **Spec kit + prompts + código, y que correspondan** | Están las **tres** cosas: el spec kit de la versión, el prompt de **cada integrante** y el código. El profesor ejecuta ese spec kit y esos prompts **en otra IA** y lo que sale **corresponde en gran medida** con el repositorio | Falta una de las tres, o lo que sale al volver a ejecutarlos no se parece a lo entregado |
 | **INTERPRETABILIDAD (v2+)** · *4 de los 20 puntos* | Cada integrante **cuenta en voz alta** el archivo que el profesor elija de lo que ÉL entregó: qué hace, por qué así, qué pasa si falla y qué cambiaría. Y los comentarios del código dicen **por qué**, no qué | No puede explicar lo que entregó, o lo recita; los comentarios repiten el nombre del método —o están equivocados y no se dio cuenta— (§2.2) |
 
 Dentro de la franja "Cumple", la nota (3.0 a 5.0) refleja la calidad:
 completitud, solidez ante errores, claridad del código y de la spec, y la
 sustentación individual.
 
-> **Y una advertencia sobre la fila de interpretabilidad, porque es la que más
-> sorprende:** un equipo puede tener los otros criterios en verde y esa en
-> 2.9. No es un descuido de la rúbrica —es el único criterio que no se puede
-> delegar—. Ver la §2.2.
+> La fila de interpretabilidad se califica aparte de las demás: es la parte
+> individual de la nota, la que cada quien responde por su propio trabajo.
+> Ver la §2.2.
 
 **Entregar en cada versión:** enlaces a los 2 repos (con el tag `vN`
 puesto) + evidencia del quickstart de su spec pasando. En la v4, además:
