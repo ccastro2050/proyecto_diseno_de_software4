@@ -62,7 +62,11 @@ def _opciones():
     if not (ok_c and ok_v and ok_p and ok_pr):
         flash("No se pudieron cargar todas las listas. Algunos desplegables "
               "van a estar vacíos.", "error")
-    nombre = {p.get("id"): p.get("nombre", "") for p in personas}
+    # La llave de `persona` es `codigo` —"P001"—, NO `id`: eso es lo que trae
+    # `fkcodpersona` del cliente y del vendedor. Con `id` el diccionario queda
+    # lleno de `None` y el desplegable muestra "?" en vez del nombre. Se midió:
+    # GET /api/persona devuelve {codigo, nombre, email, telefono}.
+    nombre = {p.get("codigo"): p.get("nombre", "") for p in personas}
     return (
         [(str(c["id"]), "%s (cliente %s)"
           % (nombre.get(c.get("fkcodpersona"), "?"), c["id"])) for c in clientes],
