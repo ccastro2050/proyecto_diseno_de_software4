@@ -37,17 +37,46 @@
 
 ---
 
-## 1. El método: SDD por versiones (igual que en clase)
+## 1. El método: SDD por versiones
 
 El proyecto de aula se trabaja con **Spec-Driven Development (SDD)**:
-primero la especificación, después el código, **versión por versión** —
-exactamente como el ejemplo del curso:
+primero la especificación, después el código, **versión por versión** — de
+forma **equivalente** al ejemplo de este curso: el mismo método, otro
+dominio.
 
-| Ejemplo de clase | Qué demuestra |
-|---|---|
-| [proyecto_aplicacion_y_servicios_web1](https://github.com/ccastro2050/proyecto_aplicacion_y_servicios_web1) | La v1: una rebanada vertical con capas, especificada antes de codificar |
-| [proyecto_aplicacion_y_servicios_web2](https://github.com/ccastro2050/proyecto_aplicacion_y_servicios_web2) | La v2: crecer SOBRE la v1 sin romperla (regresión + spec del delta) |
-| proyecto_aplicacion_y_servicios_web3 y …web4 | Llegarán durante el semestre — la ruta continúa igual |
+**El ejemplo de clase es UN repositorio**, y trae las cuatro versiones
+adentro:
+
+> ### 👉 [proyecto_diseno_de_software4](https://github.com/ccastro2050/proyecto_diseno_de_software4)
+>
+> `bdfacturas` construido de punta a punta, con **los diagramas de este
+> curso** en su spec kit, y **dentro de él las tres versiones anteriores**,
+> cada una cerrada con su tag:
+>
+> | Tag | Qué se ve al abrirlo |
+> |---|---|
+> | `v1` | Una rebanada vertical con capas —API y front— especificada antes de codificar |
+> | `v2` | Crecer SOBRE la v1 sin romperla: regresión y spec del delta |
+> | `v3` | El control de acceso: contraseña con hash, token, 401 y 403 |
+> | `v4` | El aplicativo: consultas multitabla, tablero, marca y publicación |
+>
+> Para ver una versión anterior no se busca otro repositorio: se abre **ese
+> tag**.
+
+> # LAS VERSIONES NO SON REPOSITORIOS
+>
+> **El proyecto de aula va en UN repositorio** —o en **DOS**, si separan el
+> backend del front: uno para la **API** y uno para el **front** (§5)—.
+>
+> **Nunca uno por versión.** Las cuatro versiones viven en el mismo
+> repositorio: se trabaja sobre `main` y al cerrar una versión se le pone su
+> **tag `vN`**.
+>
+> ```
+> su repositorio:   main ──●────────●────────●────────●──▶
+>                          │        │        │        │
+>                        tag v1   tag v2   tag v3   tag v4
+> ```
 
 Lo que se replica del ejemplo **es el MÉTODO, no el contenido**: la
 constitución permanente, una carpeta de specs por versión con sus
@@ -278,7 +307,7 @@ prompts que llevaron de la spec al código estén entregados.
 Escribir los documentos no basta: lo que separa un spec kit de una carpeta
 con archivos son **tres puntos donde el equipo se detiene, revisa y no
 sigue hasta que quede en verde**. Están explicados con ejemplos en el
-[SDD_SPECKIT.md del ejemplo de clase](https://github.com/ccastro2050/proyecto_aplicacion_y_servicios_web1/blob/main/docs/SDD_SPECKIT.md).
+[SDD_SPECKIT.md](conceptos/SDD_SPECKIT.md), aquí al lado.
 
 | | Dónde vive | Qué pregunta | Si falla |
 |---|---|---|---|
