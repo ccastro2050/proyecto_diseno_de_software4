@@ -657,11 +657,82 @@ token    : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 > propio panel lo advierte: *«Your free instance will spin down with
 > inactivity, which can delay requests by 50 seconds or more»*.
 
-**También está el Swagger**, que viaja encendido en esta API:
+### 5.8 · La misma prueba sin terminal: Swagger
+
+**Esta API viaja con Swagger encendido**, así que todo lo anterior se puede
+hacer desde el navegador:
 
 ```
 https://apifacturas-diseno4.onrender.com/swagger
 ```
+
+![Swagger de la API publicada](docs/tutorial_render/img/18_swagger.png)
+
+**Ahí está el contrato completo** —`/api/cliente`, `/api/factura`,
+`/api/consultas/...`— con los cinco verbos de cada recurso. **El candado al
+lado de cada ruta** significa que pide token.
+
+#### 1. Pedir el token
+
+**`Sesion` → `POST /api/sesion` → `Try it out`**, y en el cuerpo:
+
+```json
+{
+  "email": "admin@correo.com",
+  "contrasena": "admin123"
+}
+```
+
+![La respuesta del login en Swagger](docs/tutorial_render/img/19_swagger_sesion.png)
+
+```
+200
+{
+  "estado": 200,
+  "mensaje": "Sesion iniciada.",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "email": "admin@correo.com",
+  "roles": [ "Administrador" ],
+  "expira": "2026-10-30T04:00:57Z"
+}
+```
+
+> **Fíjese en `expira`: una hora.** Pasada esa hora el mismo token devuelve
+> `401` y hay que volver a pedir uno. **Eso no es un estorbo, es el punto:** un
+> token robado tiene fecha de vencimiento.
+
+#### 2. Guardarlo
+
+**Botón `Authorize`**, arriba a la derecha.
+
+![El dialogo Authorize](docs/tutorial_render/img/20_swagger_authorize.png)
+
+**Pegue el token solo, sin la palabra `Bearer`** — ésa la pone Swagger. Es el
+error más común aquí, y el resultado es un `401` que parece decir que el token
+está malo cuando lo que sobra es una palabra.
+
+> **Y ojo al copiar:** el token es larguísimo y el navegador lo muestra
+> partido. **Hay que llevarse la cadena completa**, de la primera `e` a la
+> última letra.
+
+#### 3. Usarlo
+
+**Cualquier ruta con candado, `Try it out` → `Execute`.**
+
+![Usuarios devueltos con el token](docs/tutorial_render/img/21_swagger_usuarios.png)
+
+```
+GET /api/usuario?limite=1000     ->  200
+
+{ "tabla": "usuario", "limite": 1000, "total": 8, "datos": [ ... ] }
+```
+
+**Ocho usuarios**, los que sembró el script del paso 2 — leídos desde Neon.
+
+> **Y la prueba que falta, que es la que de verdad vale:** oprima `Authorize` →
+> `Logout` y ejecute la misma ruta otra vez. **Debe responder `401`.** Si
+> devolviera los datos igual, el control de acceso no estaría funcionando — y
+> eso **no se descubre probando lo que sí funciona.**
 
 ---
 
