@@ -87,7 +87,7 @@ https://neon.com
 | | Qué poner | Por qué |
 |---|---|---|
 | **Nombre** | `bdfacturas-diseno4` | Es el nombre del proyecto, no el de la base de datos. La base de datos se va a llamar `neondb` |
-| **`Region`** | **`AWS Europe Central 1 (Frankfurt)`** | **Donde quede la base de datos van a quedar los demás servicios.** Cada salto entre continentes se le suma a cada consulta |
+| **`Region`** | **`AWS Europe Central 1 (Frankfurt)`** | **Donde quede la base de datos van a quedar los demás servicios.** Ver el recuadro de abajo |
 | **`Services`** | **Solo `Postgres database`** | Los otros cinco —`Object storage`, `Functions`, `AI gateway`, `Realtime`, `Better Auth`— **se quedan apagados.** Este proyecto no los usa |
 
 > **El recuadro negro sobre el globo dice lo que da el plan gratuito:**
@@ -98,6 +98,38 @@ https://neon.com
 > la base de datos **se apaga** y deja de consumir. La primera consulta después
 > de un rato tarda unos segundos **porque está despertando**, no porque algo
 > esté mal.
+
+#### ¿Y por qué Frankfurt, estando en Colombia?
+
+**La regla que de verdad importa es otra: la API y la base de datos tienen que
+quedar en la MISMA región.** Cuál sea esa región pesa mucho menos — y conviene
+verlo con números en vez de creerlo.
+
+**Medido el 29 de octubre de 2026, desde Medellín**, ida y vuelta completa:
+
+| Hasta dónde | Cuánto tardó |
+|---|---|
+| **Frankfurt** —la API de este tutorial— | **0,28 – 0,30 s** |
+| **Virginia** —un servicio de AWS, de referencia— | **0,26 s** |
+
+**Casi lo mismo.** La diferencia entre «al otro lado del Atlántico» y «en el
+mismo continente» son **centésimas**, porque de todas formas el tráfico sale
+del país por unos pocos cables.
+
+> **Lo que NO es casi lo mismo es separar la API de la base de datos.** Ese
+> salto no ocurre una vez: **ocurre varias veces por pantalla.** Una página
+> que haga diez consultas, con la base de datos en otro continente, paga el
+> viaje diez veces — y ahí sí se nota.
+
+**Entonces, ¿por qué Frankfurt aquí?** Por una razón honesta y poco técnica:
+**la cuenta de Render ya tenía un servicio en Frankfurt** —el front de otro
+curso— y los servicios de una misma región **se hablan por red privada**. Si
+usted empieza de cero, **escoja la región más cercana a sus usuarios** y ponga
+todo lo demás ahí.
+
+> **Y ojo con esto, que no tiene vuelta atrás:** la región de un proyecto de
+> Neon **se escoge al crearlo y no se cambia después**. Para mudarla hay que
+> crear otro proyecto y volver a cargar el esquema.
 
 **`Create project`.**
 
@@ -394,5 +426,245 @@ docker rm -f prueba-neon
 
 ---
 
-> **En construcción.** Los pasos 4 a 8 se escriben a medida que se ejecutan:
-> este documento no describe nada que no se haya hecho de verdad.
+## Paso 4 — La imagen de producción, y por qué hubo que escribir otra
+
+**El repositorio tiene dos `Dockerfile` para la misma API**, y conviene saber
+por qué antes de decirle a Render cuál usar:
+
+```
+api_facturas/
+   Dockerfile               <- desarrollo: el que usa docker compose
+   Dockerfile.produccion    <- publicado: el que usa Render
+```
+
+| | `Dockerfile` (desarrollo) | **`Dockerfile.produccion`** |
+|---|---|---|
+| **De qué imagen parte** | **SDK**, ~1,3 GB: trae el compilador adentro | **runtime**, la imagen final pesa **367 MB** |
+| **Cómo arranca** | `dotnet watch`: **recompila** cuando usted guarda un `.cs` | `dotnet ApiFacturas.dll`: arranca y punto |
+| **Dónde está el código** | **montado** por el compose: el contenedor lee su carpeta | **adentro de la imagen**, ya compilado |
+| **En qué puerto escucha** | 8055, fijo | **el que imponga el hospedaje** |
+
+> **Y ese último renglón es el que hunde a medio mundo.** Render —como casi
+> toda plataforma de contenedores— **impone el puerto** con la variable `PORT`
+> y espera que el programa escuche ahí. **ASP.NET Core no lee `PORT`**: lee
+> `ASPNETCORE_URLS`. Si nadie traduce, la aplicación arranca viva en otro
+> puerto y **la plataforma reporta el servicio como caído.**
+
+**La traducción es el último renglón del archivo:**
+
+```dockerfile
+CMD ["sh", "-c", "export ASPNETCORE_URLS=http://0.0.0.0:${PORT:-8055}; exec dotnet ApiFacturas.dll"]
+```
+
+| La parte | Qué hace |
+|---|---|
+| `["sh", "-c", ...]` | **pasa por un shell.** La forma corta —`["dotnet", "ApiFacturas.dll"]`— no lo hace, y entonces `$PORT` llegaría **literal**, con el signo de dólar |
+| `${PORT:-8055}` | usa `PORT` **si existe**; si no, el 8055 del proyecto. **La misma imagen sirve en Render y en su máquina** |
+| `exec` | hace que `dotnet` sea el proceso 1 del contenedor: así recibe la señal de apagado y **termina ordenado** |
+
+**El estudiante no tiene que escribir nada de esto:** el archivo ya está en el
+repositorio. Lo que sí tiene que hacer es **decirle a Render que use ése** —y
+eso es el campo `Dockerfile Path` del paso siguiente.
+
+---
+
+## Paso 5 — El servicio de la API en Render
+
+### 5.1 · La cuenta
+
+```
+https://render.com
+```
+
+**`Get started`**, en una ventana de incógnito. Ofrece GitHub, GitLab,
+Bitbucket, Google o correo.
+
+![La pantalla de registro de Render](docs/tutorial_render/img/10_render_registro.png)
+
+> **Si entra con Google** —como se hizo aquí—, **GitHub no queda conectado**, y
+> eso cambia una cosa en el paso siguiente: hay que pegar la dirección del
+> repositorio a mano. A cambio, no se enreda con tener varias cuentas de GitHub
+> abiertas en el navegador.
+
+![El tablero de Render](docs/tutorial_render/img/11_render_tablero.png)
+
+> **Y una advertencia sobre las 750 horas:** son **de la cuenta**, no de cada
+> servicio. En este tablero ya había un servicio de otro curso, y al terminar
+> este tutorial van a ser **tres**. Como los servicios gratuitos **se duermen a
+> los 15 minutos**, solo gastan horas mientras alguien los usa — pero si usted
+> deja tres despiertos todo el día, las 750 horas se acaban antes de fin de mes.
+
+### 5.2 · De dónde saca el código
+
+**`+ New`** → **`Web Service`**.
+
+![El menu New de Render](docs/tutorial_render/img/12_render_new_web_service.png)
+
+**Tres pestañas, y aquí se usa la del medio:**
+
+| Pestaña | Qué hace | |
+|---|---|---|
+| `Git Provider` | Render se conecta a su cuenta y **republica con cada `git push`** | Lo ideal |
+| **`Public Git Repository`** | Se le pega la dirección y ya. **Sin conectar cuentas** | **La que usamos** |
+| `Existing Image` | Para una imagen ya construida en un registro | No |
+
+![La direccion del repositorio pegada](docs/tutorial_render/img/13_render_repo_publico.png)
+
+```
+https://github.com/ccastro2050/proyecto_diseno_de_software4
+```
+
+**`Connect`.**
+
+> **Render clona el repositorio y detecta `Docker` solo**, porque encuentra un
+> `Dockerfile`. Eso no hay que escogerlo. **Y fíjese en lo que implica: Render
+> no lee su disco.** Lo que no esté subido a GitHub, para Render no existe.
+
+### 5.3 · El formulario: cinco campos, y uno se esconde
+
+![Los campos del formulario](docs/tutorial_render/img/15_render_campos.png)
+
+| Campo | Qué poner | Qué es |
+|---|---|---|
+| **`Name`** | `apifacturas-diseno4` | **Queda en la dirección pública**: `apifacturas-diseno4.onrender.com`. El que trae por defecto es el nombre del repositorio entero |
+| `Project` | **vacío** | Solo sirve para agrupar servicios en el tablero |
+| `Language` | `Docker` | **Lo detectó solo.** No se toca |
+| `Branch` | `main` | La rama que se publica |
+| **`Region`** | **`Frankfurt (EU Central)`** | **Donde quedó Neon.** Si lo deja en Oregón, cada consulta cruza Estados Unidos **y** el Atlántico |
+| **`Root Directory`** | `api_facturas` | **El que más se olvida.** Sin él, Render trabaja desde la raíz del repositorio, donde no hay ninguna API |
+| **`Compute`** | **`$0 / month · Free`** | Viene marcado el de **7 dólares** |
+
+> **Al escribir en `Root Directory`, le va a ofrecer las carpetas de adentro**
+> —`api_facturas/Controllers/`, `api_facturas/Modelos/`—. **No escoja ninguna:**
+> la que sirve es `api_facturas/`, que ya quedó escrita. Cierre la lista
+> haciendo clic afuera.
+
+#### El campo que se esconde
+
+**Apenas se llena `Root Directory`, el campo `Dockerfile Path` desaparece del
+formulario.** No se borró: se fue a la sección **`Advanced`**, abajo del todo,
+justo encima de `Deploy web service`.
+
+**Ábrala**, porque sin ese campo Render construye el `Dockerfile` **de
+desarrollo** —el de `dotnet watch`, que no copia el código adentro— y el
+servicio no arranca.
+
+| Campo de `Advanced` | Qué poner | Qué es |
+|---|---|---|
+| `Docker Build Context Directory` | déjelo en `.` | Desde dónde mira Docker al construir. Ya apunta a `api_facturas/` |
+| **`Dockerfile Path`** | **`Dockerfile.produccion`** | Render ya pone el `api_facturas/` adelante. **Es el archivo del paso 4** |
+| **`Health Check Path`** | **vacío** | Si le pone una ruta, Render la golpea cada rato y **el servicio no se duerme nunca**: las 750 horas se le van solas |
+| `Auto-Deploy` | `On Commit` | Déjelo. Con repositorio público no republica solo, pero no estorba |
+
+### 5.4 · Las variables de entorno — **la tabla para copiar**
+
+**En la sección `Environment Variables`, `Add Environment Variable` cinco
+veces.** Esto es lo que lleva cada una:
+
+| KEY | VALUE | Qué es |
+|---|---|---|
+| `Motor` | `postgres` | **El interruptor de la v4.** Decide el dialecto: `postgres` o `sqlserver` |
+| `ConnectionStrings__Postgres` | la cadena del paso 3.4 | **Dónde está la base de datos.** El **doble guion bajo es el `:` de .NET**: equivale a `ConnectionStrings:Postgres` |
+| `Jwt__Key` | oprima **`Generate`** | **La clave que FIRMA el token.** `Program.cs` **aborta el arranque** si falta o tiene menos de 32 caracteres |
+| `Jwt__Issuer` | `ApiFacturas` | Quién emite el token. Si no coincide con lo que valida la API, todo responde `401` |
+| `Jwt__Audience` | `FrontFacturas` | Para quién es el token. Lo mismo |
+
+> **Y una que NO hay que poner, aunque `Program.cs` la exija:**
+> `ConnectionStrings__SqlServer`. La API pide que **existan las dos cadenas**
+> —aunque solo use una— y la de SQL Server **ya viene en el
+> `appsettings.json`** que viaja dentro de la imagen, apuntando a `localhost`.
+> **Nunca se abre**, porque `Motor` dice `postgres`.
+
+> **Fíjese dónde quedaron escritos estos valores: en el panel de Render, no en
+> un archivo del repositorio.** Ésa es la diferencia entre una contraseña
+> publicada y una que no. **El repositorio puede ser público justamente porque
+> no lleva ninguno de estos cinco valores adentro.**
+
+**Y ahora sí: `Deploy web service`.**
+
+### 5.5 · La compilación, leída
+
+![El registro de la compilacion](docs/tutorial_render/img/16_render_compilando.png)
+
+**Son las instrucciones del `Dockerfile.produccion`, en orden:**
+
+```
+#10 [compilacion 3/6] COPY ApiFacturas.csproj .
+#11 [compilacion 4/6] RUN dotnet restore ApiFacturas.csproj
+#11 2.891   Restored /origen/ApiFacturas.csproj (in 1.74 sec)
+#12 [compilacion 5/6] COPY . .
+#13 [compilacion 6/6] RUN dotnet publish ApiFacturas.csproj -c Release -o /publicado --no-restore
+```
+
+| Lo que se ve | Qué significa |
+|---|---|
+| `[compilacion N/6]` | **la etapa que se llama `compilacion`**, la primera del archivo. La segunda aparece después como `[stage-1 ...]` |
+| El `.csproj` **antes** que el código | **el orden importa:** mientras no cambien los paquetes, Docker reutiliza la capa de `restore` y reconstruir tarda segundos |
+| `warning NU1902` / `NU1903` | avisos de **vulnerabilidades conocidas** en un paquete heredado. **No detienen la compilación**, pero son el tipo de renglón que uno no debería acostumbrarse a ignorar |
+
+### 5.6 · Está viva — y tres renglones que valen el paso entero
+
+![El servicio vivo](docs/tutorial_render/img/17_render_vivo.png)
+
+```
+Overriding HTTP_PORTS '8080' and HTTPS_PORTS ''.
+   Binding to values defined by URLS instead 'http://0.0.0.0:10000'.
+Now listening on: http://0.0.0.0:10000
+Hosting environment: Production
+
+==> Your service is live
+==> Available at your primary URL https://apifacturas-diseno4.onrender.com
+```
+
+| El renglón | Qué prueba |
+|---|---|
+| **`Overriding HTTP_PORTS '8080'`** | **la imagen de .NET quería el 8080** y el `CMD` del paso 4 la mandó al **10000**, que es el que Render impuso con `PORT`. **Sin esa traducción, aquí decía «caído»** |
+| **`Hosting environment: Production`** | lo fijó el `ENV ASPNETCORE_ENVIRONMENT=Production` del `Dockerfile` |
+| **47 segundos** | lo que tardó todo: clonar, compilar .NET y arrancar |
+
+### 5.7 · La prueba, desde afuera
+
+```powershell
+Invoke-RestMethod https://apifacturas-diseno4.onrender.com/
+```
+
+```
+mensaje   : API Facturas funcionando
+version   : v4
+motor     : postgres
+```
+
+**Y la que de verdad toca la base de datos:**
+
+```powershell
+Invoke-RestMethod -Method Post -Uri https://apifacturas-diseno4.onrender.com/api/sesion `
+  -ContentType "application/json" `
+  -Body '{"email":"admin@correo.com","contrasena":"admin123"}'
+```
+
+```
+estado   : 200
+mensaje  : Sesion iniciada.
+token    : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+> **Ese `200` recorrió esto:** su navegador → **Render, Frankfurt** (la API en
+> Docker) → **Neon, Frankfurt** (la base de datos). **Dos empresas distintas**,
+> y el usuario `admin@correo.com` salió de la tabla que usted cargó en el paso 2.
+>
+> **La primera llamada del día va a tardar** hasta un minuto: **hay dos cosas
+> dormidas en fila**, el servicio de Render y la base de datos de Neon. El
+> propio panel lo advierte: *«Your free instance will spin down with
+> inactivity, which can delay requests by 50 seconds or more»*.
+
+**También está el Swagger**, que viaja encendido en esta API:
+
+```
+https://apifacturas-diseno4.onrender.com/swagger
+```
+
+---
+
+> **En construcción.** Los pasos 6 a 8 —el front en Flask y la prueba del
+> sistema completo— se escriben a medida que se ejecutan: este documento no
+> describe nada que no se haya hecho de verdad.
