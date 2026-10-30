@@ -736,6 +736,151 @@ GET /api/usuario?limite=1000     ->  200
 
 ---
 
-> **En construcción.** Los pasos 6 a 8 —el front en Flask y la prueba del
-> sistema completo— se escriben a medida que se ejecutan: este documento no
-> describe nada que no se haya hecho de verdad.
+## Paso 6 — El front en Flask
+
+**Es el mismo procedimiento del paso 5, con tres diferencias.** Y la primera
+sorprende a todo el mundo:
+
+> **Es el MISMO repositorio.** El front no vive en otro proyecto: está en la
+> carpeta `front_flask/` del repositorio que ya conectamos. **Lo único que
+> cambia es `Root Directory`.**
+>
+> **Y eso es el curso otra vez:** la API y la interfaz son **dos programas
+> distintos** que se hablan por HTTP. Que compartan carpeta en su disco no los
+> vuelve uno solo — **se publican por separado, arrancan por separado y se
+> caen por separado.**
+
+**`+ New`** → **`Web Service`** → **`Public Git Repository`** → la misma
+dirección → **`Connect`**.
+
+![El front, desde el mismo repositorio](docs/tutorial_render/img/22_render_front_repo.png)
+
+### 6.1 · Los campos
+
+| Campo | Qué poner | Qué es |
+|---|---|---|
+| **`Name`** | `facturas-flask-diseno4` | queda en la dirección: `facturas-flask-diseno4.onrender.com` |
+| **`Region`** | **`Frankfurt (EU Central)`** | ahora dice **`2 existing services`**: la API y el front del otro curso |
+| **`Root Directory`** | `front_flask` | **la única diferencia real** con el paso 5 |
+| **`Compute`** | **`$0 / month · Free`** | otra vez viene marcado el de 7 dólares |
+| **`Dockerfile Path`** | **no lo toque** | **el front sí usa el `Dockerfile` normal.** Aquí no hay dos: uno solo sirve para desarrollo y para publicado |
+
+### 6.2 · Las dos variables
+
+| KEY | VALUE | Qué es |
+|---|---|---|
+| **`API_FACTURAS_URL`** | `https://apifacturas-diseno4.onrender.com` | **a qué API le habla.** Sin esto el front busca en `localhost`, **que dentro del contenedor es él mismo** |
+| **`CLAVE_SESION`** | oprima **`Generate`** | **firma la cookie de sesión**, que es donde el front guarda el token |
+
+> **Tres errores al escribir esa dirección, y ninguno dice lo que pasa:**
+>
+> | | |
+> |---|---|
+> | **Sin `https://` adelante** | `requests` no sabe qué hacer con eso |
+> | **Con barra al final** | el front arma `...onrender.com//api/sesion` —dos barras— y la API responde `404` |
+> | **Escrita a mano** | cópiela del panel de la API. Una letra de más y el front no encuentra nada |
+
+> **Y si no pone `CLAVE_SESION`:** el front usa la clave de desarrollo **que
+> está escrita en el código** — y cualquiera que lea el repositorio podría
+> fabricarse una cookie de sesión válida.
+
+**`Deploy web service`.**
+
+### 6.3 · El registro, y los dos renglones que lo prueban todo
+
+![El front vivo en Render](docs/tutorial_render/img/23_render_front_vivo.png)
+
+```
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+[INFO] Starting gunicorn 23.0.0
+[INFO] Listening at: http://0.0.0.0:10000 (1)
+[INFO] Booting worker with pid: 7
+[INFO] Booting worker with pid: 8
+==> Your service is live
+==> Available at your primary URL https://facturas-flask-diseno4.onrender.com
+```
+
+**Aquí se cobran dos decisiones que se tomaron antes de publicar nada:**
+
+| Lo que dice el registro | Por qué |
+|---|---|
+| **`Starting gunicorn`**, y no el servidor de Flask | la imagen trae **`DEPURAR=0`** por defecto, y **nadie puso esa variable en Render**. El servidor de desarrollo de Flask atiende una petición a la vez y su depurador en internet es una puerta abierta |
+| **`Listening at: http://0.0.0.0:10000`** | **Render impone el puerto con `PORT`**, y `app.py` la lee **antes** que `PUERTO`. Por eso el mismo código corre en Docker local (8081) y aquí (10000) |
+
+> **Y fíjese en la discusión silenciosa:** Render anuncia `WEB_CONCURRENCY=1`,
+> pero arrancaron **dos** trabajadores (`pid: 7` y `pid: 8`). Es porque el
+> `Dockerfile` dice `--workers 2`, **y lo explícito gana sobre lo sugerido.**
+
+---
+
+## Paso 7 — La prueba del sistema completo
+
+```
+https://facturas-flask-diseno4.onrender.com
+```
+
+**Entre con `admin@correo.com` / `admin123`** y abra `Productos`.
+
+**Comprobado desde la terminal, contra el sitio publicado:**
+
+```
+POST /login   admin@correo.com   ->  302, redirige a /
+GET  /e/producto                 ->  <title>Productos · Comercial Los Andes S.A.</title>
+```
+
+### Lo que acaba de recorrer esa petición
+
+```
+su navegador
+   |  https
+front en Flask      Render, Frankfurt     (Python, en Docker)
+   |  https
+API                 Render, Frankfurt     (C#, en Docker)
+   |  tls
+base de datos       Neon, Frankfurt       (PostgreSQL 18)
+```
+
+| | |
+|---|---|
+| **Tres proveedores** | Render, Neon y GitHub |
+| **Dos lenguajes** | Python y C# |
+| **Dos imágenes Docker** | construidas por Render, a partir de dos `Dockerfile` del mismo repositorio |
+| **Un solo sistema** | y ninguna de las piezas sabe cómo está hecha la otra |
+
+> **La primera carga del día va a tardar**, y esta vez hay **tres cosas
+> dormidas en fila**: el front, la API y la base de datos. Cada una despierta
+> con la primera petición. **Es el precio del plan gratuito**, y el panel lo
+> advierte: *«can delay requests by 50 seconds or more»*.
+
+---
+
+## Si algo no funciona
+
+| Lo que ve | Qué revisar |
+|---|---|
+| **El servicio dice `Deploy failed`** | Lea el registro **de abajo hacia arriba**: el error de verdad suele estar varios renglones antes del final |
+| **La API arranca y se muere** | Falta `Jwt__Key`, o tiene menos de 32 caracteres. `Program.cs` **aborta a propósito** |
+| **La API responde pero todo da `500`** | La cadena de conexión. Compruébela con el paso 3.5, **en su máquina**, donde el error se ve completo |
+| **`Motor` dice `sqlserver`** | Falta la variable `Motor` en Render. Por defecto el `appsettings.json` dice `postgres`, pero **si alguien la puso mal, la API intenta T-SQL contra PostgreSQL** y el error no menciona PostgreSQL por ninguna parte |
+| **El front abre pero el login falla** | `API_FACTURAS_URL`: sin `https://`, con barra al final, o mal escrita |
+| **Todo responde `401`** | `Jwt__Issuer` o `Jwt__Audience` no coinciden con lo que valida la API |
+| **El servicio tarda 50 segundos** | Está despertando. **No es un error**, es el plan gratuito |
+| **Render construyó el `Dockerfile` equivocado** | `Settings` → `Dockerfile Path`. Debe decir `api_facturas/Dockerfile.produccion` |
+
+---
+
+## Lo que quedó demostrado
+
+| | |
+|---|---|
+| **Un `Dockerfile` es la receta, y el hospedaje solo la sigue** | Render no sabe que esto es C# ni Python: lee el archivo y construye |
+| **El puerto no lo decide la aplicación** | lo impone la plataforma, y el programa tiene que obedecer. Es el fallo más común al publicar en contenedores |
+| **Los secretos viven en el panel, no en el repositorio** | por eso este repositorio puede ser público |
+| **La misma aplicación corre en dos sitios sin cambiar una línea** | en su máquina con `docker compose`, aquí con tres servicios en tres proveedores |
+| **Las capas se pagan solas el día que hay que publicar** | la API no sabe quién la llama, el front no sabe de qué está hecha la API, y la base de datos no sabe que existe internet |
+
+---
+
+**Versión 1.0** — escrito el 29 de octubre de 2026, ejecutando cada paso.
+Las direcciones de ejemplo son las de esa corrida; **las suyas van a ser
+otras.**
