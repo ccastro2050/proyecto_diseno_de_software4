@@ -22,4 +22,25 @@ COPY . .
 
 ENV PUERTO=8081
 EXPOSE 8081
-CMD ["python", "app.py"]
+
+# El defecto es PUBLICADO, no desarrollo. Asi, un hospedaje que solo haga
+# `docker build` + `docker run` -Render, Back4App- arranca con gunicorn sin
+# que nadie configure nada. El modo de desarrollo se pide a proposito: el
+# docker-compose de este repositorio pone DEPURAR=1.
+#
+# Ponerlo al reves -depurar por defecto- es como queda abierto el depurador
+# de Werkzeug en internet. Y nadie se entera hasta que alguien lo encuentra.
+ENV DEPURAR=0
+
+# ============================================================
+# UN SOLO ARRANQUE PARA LOS DOS MUNDOS
+#
+# En desarrollo queremos el servidor de Flask: recarga al guardar y muestra
+# el error completo en la pagina. Publicado NO lo queremos: atiende una
+# peticion a la vez, y su depurador en internet es una puerta abierta.
+#
+# La variable DEPURAR decide, y el ${PORT:-${PUERTO:-8081}} es la misma
+# cadena de respaldo del app.py: manda el puerto que imponga la plataforma,
+# y si no hay, el del proyecto.
+# ============================================================
+CMD ["sh", "-c", "if [ \"$DEPURAR\" = \"0\" ]; then exec gunicorn --bind 0.0.0.0:${PORT:-${PUERTO:-8081}} --workers 2 app:app; else exec python app.py; fi"]

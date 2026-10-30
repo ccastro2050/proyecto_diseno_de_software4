@@ -1,0 +1,22 @@
+# ============================================================
+# Lo que NO entra a la imagen cuando se construye la API.
+#
+# `docker build` empieza copiando la carpeta entera al motor de Docker
+# (el «contexto»). Sin este archivo viajarían los compilados de Windows
+# —bin/ y obj/— y el resultado no es solo una imagen más gorda: el obj/
+# de Windows trae rutas de Windows escritas adentro, y la compilación
+# dentro del contenedor (que es Linux) puede fallar o, peor, mezclarse.
+#
+# En Render esto no se nota, porque Render clona de GitHub y allá bin/ y
+# obj/ no están (los excluye el .gitignore). Se nota construyendo en su
+# máquina — que es justo lo que uno hace para probar antes de publicar.
+# ============================================================
+**/bin/
+**/obj/
+
+# El proyecto de pruebas tiene su propio .csproj y no es parte de la API
+# (el ApiFacturas.csproj ya lo excluye de la compilación):
+pruebas/
+
+# Documentación y archivos de trabajo que no cambian lo que corre:
+**/*.md

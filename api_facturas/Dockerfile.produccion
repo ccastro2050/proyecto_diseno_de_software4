@@ -1,0 +1,75 @@
+# ==============================================================
+# Dockerfile de PRODUCCIÓN de la API Facturas — el que lee Render.
+#
+# El `Dockerfile` de al lado es de DESARROLLO, y ninguna de sus tres
+# decisiones sirve publicada:
+#
+#   | Desarrollo (`Dockerfile`)        | Publicado (este archivo)        |
+#   |----------------------------------|---------------------------------|
+#   | Imagen del SDK (~900 MB): trae   | Imagen del runtime (~110 MB):   |
+#   | el compilador adentro            | solo sabe EJECUTAR              |
+#   | `dotnet watch`: recompila cuando  | `dotnet ApiFacturas.dll`:       |
+#   | usted guarda un .cs              | arranca una vez y punto         |
+#   | El código viene MONTADO por el   | El código viaja DENTRO de la    |
+#   | compose (volumen)                | imagen, ya compilado            |
+#   | Puerto fijo 8055                 | El puerto que imponga el        |
+#   |                                  | hospedaje (`$PORT`)             |
+#
+# Dos etapas: la primera compila, la segunda se lleva ÚNICAMENTE el
+# resultado. Así lo que viaja no carga el compilador — y de paso el
+# código fuente no queda en el servidor.
+# ==============================================================
+
+# --------------------------------------------------------------
+# ETAPA 1 — compilar. Esta imagen se usa y se tira.
+# --------------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS compilacion
+WORKDIR /origen
+
+# El .csproj PRIMERO y el código después, por la misma razón que el front
+# copia `requirements.txt` antes que los .py: Docker guarda en caché la capa
+# de `restore` mientras la lista de paquetes no cambie. Editar un .cs
+# reconstruye en segundos; cambiar el .csproj sí vuelve a bajar los paquetes.
+COPY ApiFacturas.csproj .
+RUN dotnet restore ApiFacturas.csproj
+
+COPY . .
+# `-c Release` compila optimizado (el modo por defecto es Debug).
+# `--no-restore` porque el RUN de arriba ya lo hizo: sin esto, lo repite.
+RUN dotnet publish ApiFacturas.csproj -c Release -o /publicado --no-restore
+
+# --------------------------------------------------------------
+# ETAPA 2 — ejecutar. Esta es la imagen que de verdad viaja.
+# --------------------------------------------------------------
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+WORKDIR /app
+
+# Lo único que cruza de la etapa anterior: la carpeta publicada.
+# El SDK, el código fuente y los paquetes de compilación se quedan atrás.
+COPY --from=compilacion /publicado .
+
+# Production es el entorno por defecto cuando nadie fija la variable, pero
+# aquí queda escrito a propósito: lo implícito se olvida y lo escrito se lee.
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+EXPOSE 8055
+
+# ==============================================================
+# EL ARRANQUE, Y POR QUÉ NO ES LA FORMA CORTA
+#
+# La forma corta —CMD ["dotnet", "ApiFacturas.dll"]— no pasa por un shell,
+# así que `$PORT` llegaría LITERAL, con el signo de dólar incluido.
+#
+# Render (como casi toda plataforma de contenedores) impone el puerto con la
+# variable PORT y espera que el programa escuche AHÍ. Si uno escucha en otro,
+# la plataforma reporta el servicio como caído — con la aplicación viva
+# adentro. Es el fallo más común al publicar en contenedores.
+#
+# ASP.NET Core no lee PORT: lee ASPNETCORE_URLS. Este renglón es el traductor.
+# Y el `${PORT:-8055}` deja el 8055 como respaldo, para que la misma imagen
+# corra en su máquina sin que nadie le fije nada.
+#
+# `exec` para que `dotnet` sea el proceso 1 del contenedor: así recibe la
+# señal de apagado y termina ordenado, en vez de que el shell se la coma.
+# ==============================================================
+CMD ["sh", "-c", "export ASPNETCORE_URLS=http://0.0.0.0:${PORT:-8055}; exec dotnet ApiFacturas.dll"]
