@@ -932,7 +932,7 @@ base de datos       Neon, Frankfurt       (PostgreSQL 18)
 | **El servicio dice `Deploy failed`** | Lea el registro **de abajo hacia arriba**: el error de verdad suele estar varios renglones antes del final |
 | **La API arranca y se muere** | Falta `Jwt__Key`, o tiene menos de 32 caracteres. `Program.cs` **aborta a propósito** |
 | **La API responde pero todo da `500`** | La cadena de conexión. Compruébela con el paso 3.5, **en su máquina**, donde el error se ve completo |
-| **`Motor` dice `sqlserver`** | Falta la variable `Motor` en Render. Por defecto el `appsettings.json` dice `postgres`, pero **si alguien la puso mal, la API intenta T-SQL contra PostgreSQL** y el error no menciona PostgreSQL por ninguna parte |
+| **`GET /` dice `motor: sqlserver`** | Alguien escribió `sqlserver` en la variable `Motor` de Render. **Si la variable no existe no pasa nada** —el `appsettings.json` del proyecto ya dice `postgres`—, pero **puesta mal sí hace daño**: la API arranca bien, intenta hablar **T-SQL contra PostgreSQL**, y el error que sale no menciona PostgreSQL por ninguna parte |
 | **El front abre pero el login falla** | `API_FACTURAS_URL`: sin `https://`, con barra al final, o mal escrita |
 | **Todo responde `401`** | `Jwt__Issuer` o `Jwt__Audience` no coinciden con lo que valida la API |
 | **El servicio tarda 50 segundos** | Está despertando. **No es un error**, es el plan gratuito |
