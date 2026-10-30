@@ -53,11 +53,12 @@ funcionando; lo que no hay es dónde publicarlo sin pagar.
 |---|---|---|
 | **1** | La base de datos | Neon |
 | **2** | El esquema y los datos | Neon |
-| **3** | La imagen de producción de la API, leída | su editor |
-| **4** | El servicio de la API | Render |
-| **5** | Las variables de entorno de la API | Render |
-| **6** | El front en Flask | Render |
-| **7** | La prueba del sistema completo | el navegador |
+| **3** | La cadena de conexión — y comprobarla **antes** de publicar | Neon · su máquina |
+| **4** | La imagen de producción de la API, leída | su editor |
+| **5** | El servicio de la API | Render |
+| **6** | Las variables de entorno de la API | Render |
+| **7** | El front en Flask | Render |
+| **8** | La prueba del sistema completo | el navegador |
 
 ---
 
@@ -259,5 +260,139 @@ las dos que no caben en la pantalla.
 
 ---
 
-> **En construcción.** Los pasos 3 a 7 se escriben a medida que se ejecutan:
+## Paso 3 — La cadena de conexión
+
+**Botón verde `Connect`**, arriba a la izquierda.
+
+![El diálogo Connect, con la contraseña tapada](docs/tutorial_render/img/09_neon_conectar.png)
+
+### 3.1 · Lo que hay que mirar en el diálogo
+
+| Campo | Valor | Qué es |
+|---|---|---|
+| **Las cuatro pestañas** | `Postgres database` · `Storage` · `Data API` · `Auth` | Formas distintas de llegar a los datos. **La nuestra es la primera**: conexión SQL de toda la vida |
+| **`Compute`** | `Primary` · `Idle` | **Está dormida.** No es un problema: la primera consulta la despierta |
+| **`Database`** | **`neondb`** | El nombre que Neon le pone. No vale la pena cambiarlo |
+| **`Role`** | **`neondb_owner`** | El usuario. En PostgreSQL los usuarios se llaman *roles* |
+| **`Reset password`** | | Cambia la contraseña. **Es lo que se usa cuando una clave se filtra** — y al terminar el curso conviene oprimirlo |
+
+### 3.2 · `Connection pooling`: déjelo encendido
+
+Mire lo que le hace al nombre del servidor:
+
+```
+ep-weathered-dream-b91narw8-pooler.c-7.eu-central-1.aws.neon.tech
+                            ^^^^^^^
+                            esto lo agrega el pooling
+```
+
+| Sin *pooling* | **Con *pooling*** |
+|---|---|
+| Cada conexión abre un proceso en la base de datos | **Un intermediario reparte un puñado de conexiones** entre todos |
+| Se agota rápido | Aguanta muchos más clientes |
+
+> **Y para esta API es justo lo que hace falta:** abre y cierra conexión **en
+> cada petición**. Sin el *pooler*, veinte estudiantes probando a la vez la
+> tumban.
+
+### 3.3 · La cadena, y lo que dice el final
+
+```
+postgresql://neondb_owner:LA_CLAVE@ep-weathered-dream-b91narw8-pooler.c-7.eu-central-1.aws.neon.tech/neondb
+             ?sslmode=require&channel_binding=require
+```
+
+| Parte | Qué dice |
+|---|---|
+| `postgresql://` | El formato estándar de PostgreSQL — **no es el de .NET** |
+| `...eu-central-1...` | **Frankfurt.** Ahí queda confirmada la región |
+| **`sslmode=require`** | **Cifrado obligatorio.** Esta conexión **sale a internet**: va de Render a Neon, por fuera de cualquier red privada |
+| **`channel_binding=require`** | Amarra la autenticación al canal cifrado, para que nadie se interponga |
+
+> **`Hide password` antes de tomar la captura.** El diálogo trae la contraseña
+> a la vista, y una captura con la clave adentro **es la clave publicada**: las
+> imágenes de este tutorial viven en GitHub igual que el código.
+>
+> **Copie la cadena con `Copy snippet`, nunca a mano.** Esa contraseña mezcla
+> caracteres que se confunden entre sí —`l` con `1`, `O` con `0`— y uno mal
+> leído se manifiesta como un error de autenticación **que no dice que el
+> problema sea un carácter.**
+
+**Guárdela en un `.txt` fuera del repositorio.** No va a ningún archivo del
+proyecto: en el paso 6 se escribe **directamente en el panel de Render**.
+
+### 3.4 · Traducirla al formato de .NET
+
+**Npgsql no entiende `postgresql://`.** Hay que pasarla a pares `Clave=Valor`:
+
+```
+Host=ep-weathered-dream-b91narw8-pooler.c-7.eu-central-1.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=SU_CLAVE;SSL Mode=Require
+```
+
+| El formato de Neon | **El de .NET** |
+|---|---|
+| `postgresql://usuario:clave@servidor/base` | Pares `Clave=Valor` separados por `;` |
+| `?sslmode=require` | **`SSL Mode=Require`** — con espacio y mayúsculas |
+| `&channel_binding=require` | **Se omite.** Npgsql no tiene esa opción: **ya usa amarre de canal por su cuenta** cuando la conexión va cifrada |
+
+### 3.5 · Comprobarla aquí, antes de publicar nada
+
+**Esto es opcional y vale la pena**, porque separa dos preguntas que después se
+mezclan: *«¿está mal la cadena?»* y *«¿está mal el hospedaje?»*.
+
+Se construye la imagen de producción y se corre **en su máquina**, apuntando a
+Neon:
+
+```powershell
+docker build -f api_facturas/Dockerfile.produccion -t apifacturas-prod api_facturas
+
+docker run -d --name prueba-neon -p 18056:18056 `
+  -e PORT=18056 `
+  -e Motor=postgres `
+  -e ConnectionStrings__Postgres="Host=...;Database=neondb;Username=neondb_owner;Password=SU_CLAVE;SSL Mode=Require" `
+  -e Jwt__Key="UnaClaveDePruebaDeTreintaYDosCaracteresOMas" `
+  -e Jwt__Issuer=ApiFacturas -e Jwt__Audience=FrontFacturas `
+  apifacturas-prod
+```
+
+| La parte | Qué hace |
+|---|---|
+| `-e PORT=18056` | **imita lo que hace Render**: imponerle el puerto desde afuera |
+| `-e Motor=postgres` | el interruptor de la v4 |
+| `-e ConnectionStrings__Postgres=...` | **el doble guion bajo es el `:` de .NET**: equivale a `ConnectionStrings:Postgres` |
+| `-e Jwt__Key=...` | `Program.cs` **aborta el arranque** si falta o tiene menos de 32 caracteres |
+
+**Y la prueba que vale**, iniciar sesión —porque eso sí va a la base de datos:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://localhost:18056/api/sesion `
+  -ContentType "application/json" `
+  -Body '{"email":"admin@correo.com","contrasena":"admin123"}'
+```
+
+**Lo que contestó:**
+
+```
+estado   : 200
+mensaje  : Sesion iniciada.
+token    : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+> **Ese `200` prueba tres cosas de una vez:** la imagen de producción arranca,
+> **la cadena llega hasta Frankfurt con TLS**, y los datos semilla están ahí
+> —porque el usuario `admin@correo.com` salió de la tabla `usuario` que se
+> cargó en el paso 2.
+>
+> **Si esto funciona y después Render falla, el problema no es el suyo: es la
+> configuración del hospedaje.** Eso es lo que compra esta comprobación.
+
+**Al terminar, el contenedor de prueba sobra:**
+
+```powershell
+docker rm -f prueba-neon
+```
+
+---
+
+> **En construcción.** Los pasos 4 a 8 se escriben a medida que se ejecutan:
 > este documento no describe nada que no se haya hecho de verdad.
