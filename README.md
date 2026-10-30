@@ -379,5 +379,22 @@ de aceptación (commit + tag). Mapa completo:
 
 ---
 
+## 6. Publicar el sistema en internet
+
+| Documento | Qué cubre |
+|---|---|
+| [**Tutorial — Publicar el sistema en Render**](TUTORIAL_RENDER.md) | Los siete pasos, ejecutados y con capturas: la base de datos en **Neon**, la **API** y el **front Flask** en **Render**, cada uno en su contenedor. Incluye el `Dockerfile` de producción, cómo se traduce el puerto que impone el hospedaje, y las variables de entorno en tabla para copiar |
+
+> **Lo que ese tutorial deja demostrado** es lo mismo que el curso viene
+> afirmando: que la API, la interfaz y la base de datos son **tres programas
+> separados**. En su máquina comparten un `docker compose`; publicados quedan
+> en **tres proveedores distintos** — y ninguno tuvo que cambiar una línea de
+> código para mudarse.
+>
+> **SQL Server se queda en su máquina:** no hay SQL Server administrado
+> gratuito. El interruptor `MOTOR_BD` sigue funcionando local.
+
+---
+
 *Proyecto Diseño de Software · USB Medellín · Base de datos bdfacturas
 (facturación + RBAC).*
