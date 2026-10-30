@@ -148,33 +148,114 @@ vale leerla entera una vez:
 
 ## Paso 2 — El esquema y los datos
 
-**En el menú de la izquierda: `SQL Editor`.**
+**En el menú de la izquierda, bajo `Postgres database`: `SQL Editor`.**
 
-Abra este archivo del repositorio, **seleccione todo** y péguelo en el editor:
+### 2.1 · El editor NO llega vacío
+
+![El editor de SQL con el ejemplo que trae Neon](docs/tutorial_render/img/04_neon_sql_editor.png)
+
+**Trae un ejemplo de Neon** que crea una tabla llamada `playing_with_neon`. No
+estorba, pero no es lo nuestro: hay que **reemplazarlo**, no escribir debajo.
+
+Arriba, compruebe dos cosas antes de seguir:
+
+| | |
+|---|---|
+| **`neondb`** | la base de datos donde van a caer las tablas |
+| **`Primary`** | la única rama que existe |
+
+> **Y si dice `Idle` en vez de `Active`, no pasa nada:** es la base de datos
+> dormida. **La primera consulta la despierta.**
+
+### 2.2 · Cómo se copia un archivo de 1.106 renglones
+
+**El archivo es `db\bdfacturas_postgres.sql`** y no cabe en una pantalla. Se
+puede abrir en VS Code y hacer `Ctrl+A`, `Ctrl+C` —pero hay una forma de un
+solo renglón, **desde PowerShell**:
+
+```powershell
+Get-Content "C:\Users\fcl\OneDrive\Desktop\proyectos_usbmed\2026_2\proyecto_diseno_de_software4\db\bdfacturas_postgres.sql" -Raw | Set-Clipboard
+```
+
+| La parte | Qué hace |
+|---|---|
+| `Get-Content <ruta>` | **lee el archivo** |
+| **`-Raw`** | lo entrega como **un solo texto**. Sin esta palabra lo entregaría renglón por renglón, y el pegado saldría desarmado |
+| **`\| Set-Clipboard`** | mete ese texto **en el portapapeles**, listo para `Ctrl+V` |
+
+**No responde nada, y así debe ser:** en PowerShell el silencio es éxito. Si la
+ruta estuviera mal, habría un error en rojo.
+
+> **El error que cae aquí, y que cayó escribiendo este tutorial:** copiar **la
+> ruta** y pegarla en el editor de Neon. Queda un renglón con
+> `C:\Users\...\bdfacturas_postgres.sql` adentro, que para PostgreSQL no
+> significa nada.
+>
+> **La ruta es el papelito donde está anotada la dirección de la casa; el
+> archivo es la casa.** Ese comando existe justamente para no confundirlos:
+> `Get-Content` va a esa dirección y trae lo que hay adentro.
+
+### 2.3 · Pegar — y un aviso que asusta sin motivo
+
+**Clic en el editor** → `Ctrl+A` (para que lo pegado **sustituya** el ejemplo)
+→ `Ctrl+V`.
+
+![El script completo pegado en el editor](docs/tutorial_render/img/06_neon_script_pegado.png)
+
+**Abajo aparece esto:**
 
 ```
-db\bdfacturas_postgres.sql
+This query will still run OK, but the last 32419 characters
+will be truncated from query history
 ```
 
-**Son 1.106 renglones**: las 12 tablas, el *trigger* que recalcula totales y
-descuenta stock, los procedimientos de la factura y los datos semilla. **`Run`.**
+> **Se ejecuta completo.** Lo que Neon recorta es **la copia que guarda en su
+> historial**, para no almacenar 60 KB de texto cada vez que usted oprime
+> `Run`. **El script entero sí llega a la base de datos.**
 
-> **Es exactamente el mismo archivo que usa el `docker-compose`** para sembrar
-> el PostgreSQL de su máquina. **No existe una versión «para la nube»**: la base
-> de datos local y la publicada nacen del mismo guion, y por eso lo que usted
-> probó en su PC es lo que va a haber allá.
+**`Run`.**
 
-**Comprobar, que es más seguro que confiar.** En el mismo editor:
+### 2.4 · Lo que contesta
+
+![El resultado: 46 sentencias ejecutadas](docs/tutorial_render/img/07_neon_script_ejecutado.png)
+
+```
+Connected (46 queries)        231ms
+1: CREATE   2: CREATE   ...   12: CREATE   13: INSERT   ...
+Statement executed successfully
+```
+
+| Lo que dice | Qué es |
+|---|---|
+| **46 sentencias** | las 12 tablas, el *trigger*, los procedimientos y los `INSERT` de los datos semilla |
+| **12 `CREATE`** seguidos | las 12 tablas, en orden: primero las que no dependen de nadie |
+| **231 ms** | **desde Colombia hasta Frankfurt**, creando una base de datos entera |
+
+### 2.5 · Comprobar, que es más seguro que confiar
+
+**Borre el editor y pegue esto:**
 
 ```sql
 SELECT table_name FROM information_schema.tables
 WHERE table_schema = 'public'
 ORDER BY table_name;
-
-SELECT COUNT(*) AS productos FROM producto;
 ```
 
-**Deben salir 12 tablas**, y productos sembrados.
+![Las doce tablas listadas](docs/tutorial_render/img/08_neon_doce_tablas.png)
+
+**`12 rows`**, y ahí están: `cliente`, `empresa`, `factura`, `persona`,
+`producto`, `productosporfactura`, `rol`, `rol_usuario`, `ruta`, `rutarol`, y
+las dos que no caben en la pantalla.
+
+> **Y aquí conviene aclarar algo que confunde**, porque el archivo que acaba de
+> correr **se llama `bdfacturas_postgres.sql` y habla por dentro de
+> `bdfacturas_postgres_local`** —que es el nombre que tiene la base de datos
+> **en su máquina**, la que crea Docker.
+>
+> **Ese nombre aquí no se usa para nada.** El script **no crea ninguna base de
+> datos**: solo crea tablas **adentro de la que ya existe**, que en Neon se
+> llama `neondb`. Por eso el mismo archivo sirve en los dos sitios sin cambiar
+> una letra.
 
 ---
 
