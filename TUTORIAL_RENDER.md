@@ -828,6 +828,77 @@ POST /login   admin@correo.com   ->  302, redirige a /
 GET  /e/producto                 ->  <title>Productos · Comercial Los Andes S.A.</title>
 ```
 
+### La prueba que de verdad cierra el círculo: emitir una factura
+
+**Leer datos prueba la mitad del camino.** Para probar la otra mitad hay que
+**escribir** — y la facturación es el mejor sitio, porque ahí trabajan el
+procedimiento y el disparador que viven **dentro de la base de datos**.
+
+**`Facturas` → `Nueva factura`.** Escoja cliente y vendedor, agregue dos
+productos y mire el total:
+
+![Emitir una factura desde el front publicado](docs/tutorial_render/img/24_front_factura_nueva.png)
+
+> **El renglón bajo el total es el punto de la versión 4:**
+>
+> *«Este total es un cálculo para que usted sepa cuánto va. **No se envía**: el
+> total que queda guardado lo calcula el disparador de la base de datos, y es
+> el que manda.»*
+>
+> **La pantalla no decide la plata.** Si el front mandara el total, cualquiera
+> podría mandar otro.
+
+**`Emitir la factura`:**
+
+![La factura 7, emitida](docs/tutorial_render/img/25_front_factura_emitida.png)
+
+```
+Factura 7 emitida — los subtotales y el total los calculó la base de datos.
+```
+
+**Y ahora la comprobación, en el `SQL Editor` de Neon:**
+
+```sql
+SELECT numero, fecha, total, estado
+FROM factura
+ORDER BY numero DESC
+LIMIT 2;
+```
+
+```
+ numero |           fecha            |  total  | estado
+--------+----------------------------+---------+--------
+      7 | 2026-10-30 03:17:32.227703 | 3600000 | activa
+      6 | 2025-12-03 13:05:35.02846  | 4850000 | activa
+```
+
+**Las seis primeras son los datos semilla; la séptima la acaba de escribir
+usted desde un navegador en Colombia.**
+
+**Y el stock, que es la otra mitad de lo que hace el disparador:**
+
+```sql
+SELECT codigo, nombre, stock FROM producto
+WHERE codigo IN ('PR001', 'PR005');
+```
+
+```
+ codigo |          nombre          | stock
+--------+--------------------------+-------
+ PR001  | Laptop Lenovo IdeaPad    |    16
+ PR005  | Impresora Epson EcoTank1 |    13
+```
+
+**Bajó solo.** Nadie escribió «descontar stock» en el front ni en la API: **lo
+hizo el disparador, dentro de PostgreSQL**, en la misma transacción que
+guardó la factura.
+
+> **Eso es lo que acaba de quedar demostrado publicado, y no solo en su
+> máquina:** la regla de negocio vive donde tiene que vivir, **el total que
+> manda es el que calculó la base de datos**, y las tres piezas —front, API y
+> base de datos, en tres servicios distintos— se coordinaron para una sola
+> operación.
+
 ### Lo que acaba de recorrer esa petición
 
 ```
